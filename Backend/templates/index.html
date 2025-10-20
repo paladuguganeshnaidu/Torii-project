@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Torii Tools</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 0; display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    aside { background:#111; color:#fff; padding:16px; }
+    main { padding:24px; }
+    a { color: inherit; text-decoration: none; }
+    .nav a { display:block; padding:8px 12px; border-radius:6px; color:#ddd; }
+    .nav a.active, .nav a:hover { background:#222; color:#fff; }
+    .card { border:1px solid #eee; border-radius:8px; padding:16px; margin-bottom:16px; }
+    .row { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px; }
+    input, textarea, button { width:100%; padding:10px; margin:6px 0; }
+    .result { white-space: pre-wrap; background:#fafafa; border:1px solid #eee; padding:10px; border-radius:6px; }
+  </style>
+</head>
+<body>
+  <aside>
+    <h2>Torii</h2>
+    <div class="nav">
+      <a href="/tool/email-analyzer" class="{% if active_tool=='email-analyzer' %}active{% endif %}">Email Analyzer</a>
+      <a href="/tool/url-scanner" class="{% if active_tool=='url-scanner' %}active{% endif %}">URL Scanner</a>
+      <a href="/tool/password-cracker" class="{% if active_tool=='password-cracker' %}active{% endif %}">Password Cracker</a>
+      <a href="/tool/sms-spam-tester" class="{% if active_tool=='sms-spam-tester' %}active{% endif %}">SMS Spam Tester</a>
+      <a href="/tool/malware-analyzer" class="{% if active_tool=='malware-analyzer' %}active{% endif %}">Malware Analyzer</a>
+      <a href="/tool/web-recon" class="{% if active_tool=='web-recon' %}active{% endif %}">Web Recon</a>
+    </div>
+    <hr />
+    <div>
+      <a href="/auth/login">Login</a> · <a href="/auth/register">Register</a>
+    </div>
+  </aside>
+  <main>
+    <h1>{{ active_tool|default('Dashboard')|title }}</h1>
+
+    {% if active_tool in [None, 'email-analyzer'] %}
+    <section class="card" id="email-analyzer">
+      <h3>Email Analyzer</h3>
+      <textarea id="emailInput" rows="4" placeholder="Paste raw email text..."></textarea>
+      <button onclick="submitEmail()">Analyze</button>
+      <div id="emailResult" class="result"></div>
+    </section>
+    {% endif %}
+
+    {% if active_tool=='url-scanner' %}
+    <section class="card" id="url-scanner">
+      <h3>URL Scanner</h3>
+      <input id="urlInput" placeholder="https://example.com" />
+      <button onclick="submitUrl()">Scan</button>
+      <div id="urlResult" class="result"></div>
+    </section>
+    {% endif %}
+
+    {% if active_tool=='password-cracker' %}
+    <section class="card" id="password-cracker">
+      <h3>Password Cracker (hash)</h3>
+      <input id="hashInput" placeholder="Enter hash..." />
+      <button onclick="submitHash()">Crack</button>
+      <div id="hashResult" class="result"></div>
+    </section>
+    {% endif %}
+
+    {% if active_tool=='sms-spam-tester' %}
+    <section class="card" id="sms-spam-tester">
+      <h3>SMS Spam Tester</h3>
+      <textarea id="smsInput" rows="3" placeholder="Enter SMS text..."></textarea>
+      <button onclick="submitSms()">Test</button>
+      <div id="smsResult" class="result"></div>
+    </section>
+    {% endif %}
+
+    {% if active_tool=='malware-analyzer' %}
+    <section class="card" id="malware-analyzer">
+      <h3>Malware Analyzer</h3>
+      <input type="file" id="fileInput" />
+      <button onclick="submitFile()">Analyze</button>
+      <div id="fileResult" class="result"></div>
+    </section>
+    {% endif %}
+
+    {% if active_tool=='web-recon' %}
+    <section class="card" id="web-recon">
+      <h3>Web Recon</h3>
+      <input id="targetInput" placeholder="example.com" />
+      <button onclick="submitRecon()">Recon</button>
+      <div id="reconResult" class="result"></div>
+    </section>
+    {% endif %}
+
+  </main>
+
+<script>
+async function postJSON(url, data) {
+  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  return res.json();
+}
+async function submitEmail() {
+  const text = document.getElementById('emailInput').value;
+  const data = await postJSON('/api/email-analyzer', { text });
+  document.getElementById('emailResult').textContent = JSON.stringify(data, null, 2);
+}
+async function submitUrl() {
+  const url = document.getElementById('urlInput').value;
+  const data = await postJSON('/api/url-scanner', { url });
+  document.getElementById('urlResult').textContent = JSON.stringify(data, null, 2);
+}
+async function submitHash() {
+  const hash = document.getElementById('hashInput').value;
+  const data = await postJSON('/api/password-cracker', { hash });
+  document.getElementById('hashResult').textContent = JSON.stringify(data, null, 2);
+}
+async function submitSms() {
+  const text = document.getElementById('smsInput').value;
+  const data = await postJSON('/api/sms-spam-tester', { text });
+  document.getElementById('smsResult').textContent = JSON.stringify(data, null, 2);
+}
+async function submitFile() {
+  const file = document.getElementById('fileInput').files[0];
+  if (!file) return;
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch('/api/malware-analyzer', { method: 'POST', body: form });
+  const data = await res.json();
+  document.getElementById('fileResult').textContent = JSON.stringify(data, null, 2);
+}
+async function submitRecon() {
+  const target = document.getElementById('targetInput').value;
+  const data = await postJSON('/api/web-recon', { target });
+  document.getElementById('reconResult').textContent = JSON.stringify(data, null, 2);
+}
+</script>
+</body>
+</html>
