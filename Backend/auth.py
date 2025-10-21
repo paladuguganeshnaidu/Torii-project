@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash
-from .mysql_db import get_mysql
+from .db_adapter import insert_user
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -28,29 +28,16 @@ def register():
                 flash(e, 'error')
             return render_template('register.html', email=email, mobile=mobile)
 
-        # persist to MySQL
-        conn = get_mysql()
-        if conn is None:
-            flash('Registration database is not configured. Please set up MySQL.', 'error')
-            return render_template('register.html', email=email, mobile=mobile)
+        # persist to database (MySQL or SQLite)
         try:
             pwd_hash = generate_password_hash(password)
-            with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO users (email, mobile, password_hash)
-                    VALUES (%s, %s, %s)
-                    """,
-                    (email, mobile or None, pwd_hash),
-                )
-            conn.commit()
+            insert_user(email, mobile or None, pwd_hash)
+        except ValueError as e:
+            # Duplicate email
+            flash(str(e), 'error')
+            return render_template('register.html', email=email, mobile=mobile)
         except Exception as e:
-            # duplicate email or other DB error
-            msg = str(e)
-            if 'Duplicate' in msg or 'UNIQUE' in msg:
-                flash('Email is already registered.', 'error')
-            else:
-                flash(f'Registration failed: {e}', 'error')
+            flash(f'Registration failed: {e}', 'error')
             return render_template('register.html', email=email, mobile=mobile)
 
         # store session and redirect

@@ -3,7 +3,7 @@ from flask import Flask, jsonify, render_template, request
 
 from .config import Config
 from .database import get_db, close_db, init_db
-from .mysql_db import init_mysql, close_mysql
+from .db_adapter import init_database, close_db_connection
 from .auth import bp as auth_bp
 from .tools.email_analyzer import analyze_email_tool
 from .tools.url_scanner import scan_url_tool
@@ -23,18 +23,18 @@ def create_app():
             init_db(app)
         except Exception as e:
             app.logger.warning(f"DB init skipped or failed: {e}")
-        # Optional MySQL init (users table)
+        # Initialize unified database (MySQL or SQLite)
         try:
-            init_mysql(app)
+            init_database(app)
         except Exception as e:
-            app.logger.warning(f"MySQL init skipped or failed: {e}")
+            app.logger.warning(f"Database init skipped or failed: {e}")
 
     # Register blueprints
     app.register_blueprint(auth_bp)
 
     # Teardown
     app.teardown_appcontext(close_db)
-    app.teardown_appcontext(close_mysql)
+    app.teardown_appcontext(close_db_connection)
 
     @app.route('/')
     def index():
