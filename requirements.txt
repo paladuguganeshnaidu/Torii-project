@@ -1,0 +1,11 @@
+Flask
+requests
+pymysql
+gunicorn
+werkzeug
+python-dotenv
+bs4
+dnspython
+pillow
+reportlab
+cryptography
