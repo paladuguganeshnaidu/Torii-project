@@ -1,7 +1,7 @@
 import os
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, send_from_directory, redirect, url_for
 
-from .config import Config
+from .config import Config, PROJECT_ROOT
 from .database import get_db, close_db, init_db
 from .db_adapter import init_database, close_db_connection
 from .auth import bp as auth_bp
@@ -38,8 +38,39 @@ def create_app():
     app.teardown_appcontext(close_db)
     app.teardown_appcontext(close_db_connection)
 
+    # Serve the styled static homepage by default
     @app.route('/')
     def index():
+        # Serve the static index.html from the project root to match GitHub Pages styling
+        return send_from_directory(PROJECT_ROOT, 'index.html')
+
+    # Also serve /index.html explicitly (links may reference it)
+    @app.route('/index.html')
+    def static_index_file():
+        return send_from_directory(PROJECT_ROOT, 'index.html')
+
+    # Serve assets used by the static pages (e.g., assets/css/main.css)
+    @app.route('/assets/<path:filename>')
+    def static_assets(filename):
+        assets_dir = os.path.join(PROJECT_ROOT, 'assets')
+        return send_from_directory(assets_dir, filename)
+
+    # Expose the static tool pages for convenience
+    _ALLOWED_STATIC_PAGES = {
+        'tool1-email-analyzer.html',
+        'tool2-url-scanner.html',
+        'tool3-password-cracker.html',
+        'tool4-sms-spam-tester.html',
+        'tool5-malware-analyzer.html',
+        'tool6-web-recon.html',
+        'directory.html',
+    }
+
+    @app.route('/<path:filename>')
+    def serve_static_pages(filename):
+        if filename in _ALLOWED_STATIC_PAGES:
+            return send_from_directory(PROJECT_ROOT, filename)
+        # Fall through to 404 for unknown static files to avoid exposing the repo
         return render_template('index.html')
 
     # Simple server-rendered tool routes (optional)
