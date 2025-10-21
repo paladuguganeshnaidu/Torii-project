@@ -1,3 +1,62 @@
-<!doctype html>
-<html><head><meta charset="utf-8"><title>SMS Spam Tester</title><link rel="stylesheet" href="assets/css/main.css"></head>
-<body><h2>SMS Spam Tester</h2><textarea rows="5" placeholder="Enter SMS..."></textarea></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Spam Tester - Torii Security</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SMS Spam Detector</h1>
+            <p>Analyze SMS messages for spam and phishing indicators</p>
+        </header>
+        
+        <main>
+            <form id="sms-form">
+                <div class="form-group">
+                    <label for="phone-number">Phone Number (Optional):</label>
+                    <input type="tel" id="phone-number" name="phone" placeholder="+1234567890">
+                </div>
+                
+                <div class="form-group">
+                    <label for="sms-message">SMS Message:</label>
+                    <textarea id="sms-message" name="message" rows="4" placeholder="Enter SMS message content..." required></textarea>
+                </div>
+                
+                <button type="submit">Analyze SMS</button>
+            </form>
+            
+            <div id="result-container" class="result-container hidden">
+                <h2>Analysis Results</h2>
+                <div id="result-content"></div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        document.getElementById('sms-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const phone = document.getElementById('phone-number').value;
+            const message = document.getElementById('sms-message').value;
+            
+            fetch('/api/test_sms', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({phone: phone, message: message})
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultContainer = document.getElementById('result-container');
+                const resultContent = document.getElementById('result-content');
+                resultContent.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                resultContainer.classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

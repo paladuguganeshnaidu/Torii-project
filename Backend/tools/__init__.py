@@ -1,4 +1,4 @@
-# Expose tools as package
+# Expose all tool functions for easier imports
 from .email_analyzer import analyze_email_tool
 from .url_scanner import scan_url_tool
 from .password_cracker import crack_hash_tool
@@ -12,5 +12,5 @@ __all__ = [
     'crack_hash_tool',
     'test_sms_tool',
     'analyze_file_tool',
-    'recon_target_tool',
+    'recon_target_tool'
 ]

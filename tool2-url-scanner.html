@@ -1,3 +1,55 @@
-<!doctype html>
-<html><head><meta charset="utf-8"><title>URL Scanner</title><link rel="stylesheet" href="assets/css/main.css"></head>
-<body><h2>URL Scanner</h2><input placeholder="https://example.com"></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Scanner - Torii Security</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>URL Security Scanner</h1>
+            <p>Scan websites for security vulnerabilities and information gathering</p>
+        </header>
+        
+        <main>
+            <form id="url-form">
+                <div class="form-group">
+                    <label for="target-url">Target URL:</label>
+                    <input type="url" id="target-url" name="url" placeholder="https://example.com" required>
+                </div>
+                <button type="submit">Scan URL</button>
+            </form>
+            
+            <div id="result-container" class="result-container hidden">
+                <h2>Scan Results</h2>
+                <div id="result-content"></div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        document.getElementById('url-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const url = document.getElementById('target-url').value;
+            
+            fetch('/api/scan_url', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({url: url})
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultContainer = document.getElementById('result-container');
+                const resultContent = document.getElementById('result-content');
+                resultContent.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                resultContainer.classList.remove('hidden');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>

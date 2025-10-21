@@ -1,3 +1,32 @@
-<!doctype html>
-<html><head><meta charset="utf-8"><title>Email Analyzer</title><link rel="stylesheet" href="assets/css/main.css"></head>
-<body><h2>Email Analyzer</h2><textarea rows="6" placeholder="Paste email..."></textarea></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Analyzer - Torii Security</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Email Malware Analyzer</h1>
+            <p>Upload email files to detect suspicious attachments and content</p>
+        </header>
+        
+        <main>
+            <form id="email-form" action="/api/analyze_email" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="email-file">Upload Email File (.eml):</label>
+                    <input type="file" id="email-file" name="email_file" accept=".eml" required>
+                </div>
+                <button type="submit">Analyze Email</button>
+            </form>
+            
+            <div id="result-container" class="result-container hidden">
+                <h2>Analysis Results</h2>
+                <div id="result-content"></div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
