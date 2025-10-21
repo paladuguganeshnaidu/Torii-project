@@ -1,55 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Reconnaissance - Torii Security</title>
-    <link rel="stylesheet" href="assets/css/main.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Torii · Web Recon</title>
+    <link rel="stylesheet" href="assets/css/main.css?v=2" />
 </head>
-<body>
-    <div class="container">
+<body class="home">
+    <div class="app">
         <header>
-            <h1>Web Reconnaissance Tool</h1>
-            <p>Gather intelligence about web targets and their infrastructure</p>
+            <div class="brand"><span class="logo" aria-hidden="true"></span><span class="title">Torii</span></div>
+            <nav><a href="index.html">Home</a></nav>
         </header>
-        
-        <main>
-            <form id="recon-form">
-                <div class="form-group">
-                    <label for="target-url">Target URL:</label>
-                    <input type="url" id="target-url" name="url" placeholder="https://example.com" required>
-                </div>
-                <button type="submit">Perform Recon</button>
-            </form>
-            
-            <div id="result-container" class="result-container hidden">
-                <h2>Reconnaissance Results</h2>
-                <div id="result-content"></div>
+
+        <div class="card">
+            <h2>🌐 Web Recon</h2>
+            <p class="muted">Stub recon without external network calls.</p>
+            <div class="field">
+                <label for="targetInput">Target (domain or URL)</label>
+                <input id="targetInput" type="text" placeholder="example.com" />
             </div>
-        </main>
+            <button class="btn primary" onclick="recon()">Run Recon</button>
+            <div id="out" class="result" style="margin-top:12px"></div>
+        </div>
     </div>
-    
+
     <script>
-        document.getElementById('recon-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const url = document.getElementById('target-url').value;
-            
-            fetch('/api/recon_target', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({url: url})
-            })
-            .then(response => response.json())
-            .then(data => {
-                const resultContainer = document.getElementById('result-container');
-                const resultContent = document.getElementById('result-content');
-                resultContent.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-                resultContainer.classList.remove('hidden');
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        });
+        async function recon(){
+            const target = document.getElementById('targetInput').value;
+            const res = await fetch('/api/web-recon', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({target})});
+            const data = await res.json();
+            document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+        }
     </script>
 </body>
 </html>

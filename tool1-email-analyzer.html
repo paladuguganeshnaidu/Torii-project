@@ -1,32 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Analyzer - Torii Security</title>
-    <link rel="stylesheet" href="assets/css/main.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Torii · Email Analyzer</title>
+    <link rel="stylesheet" href="assets/css/main.css?v=2" />
 </head>
-<body>
-    <div class="container">
+<body class="home">
+    <div class="app">
         <header>
-            <h1>Email Malware Analyzer</h1>
-            <p>Upload email files to detect suspicious attachments and content</p>
+            <div class="brand"><span class="logo" aria-hidden="true"></span><span class="title">Torii</span></div>
+            <nav><a href="index.html">Home</a></nav>
         </header>
-        
-        <main>
-            <form id="email-form" action="/api/analyze_email" method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="email-file">Upload Email File (.eml):</label>
-                    <input type="file" id="email-file" name="email_file" accept=".eml" required>
-                </div>
-                <button type="submit">Analyze Email</button>
-            </form>
-            
-            <div id="result-container" class="result-container hidden">
-                <h2>Analysis Results</h2>
-                <div id="result-content"></div>
+
+        <div class="card">
+            <h2>✉️ Email Analyzer</h2>
+            <p class="muted">Paste raw email text. We’ll do a basic heuristic scan.</p>
+            <div class="field">
+                <label for="emailText">Email content</label>
+                <textarea id="emailText" placeholder="Paste email text..."></textarea>
             </div>
-        </main>
+            <button class="btn primary" onclick="analyze()">Analyze</button>
+            <div id="out" class="result" style="margin-top:12px"></div>
+        </div>
     </div>
+
+    <script>
+        async function analyze(){
+            const text = document.getElementById('emailText').value;
+            const res = await fetch('/api/email-analyzer', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text})});
+            const data = await res.json();
+            document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+        }
+    </script>
 </body>
 </html>

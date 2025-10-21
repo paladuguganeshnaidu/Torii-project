@@ -1,3 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Torii · URL Scanner</title>
+    <link rel="stylesheet" href="assets/css/main.css?v=2" />
+</head>
+<body class="home">
+    <div class="app">
+        <header>
+            <div class="brand"><span class="logo" aria-hidden="true"></span><span class="title">Torii</span></div>
+            <nav><a href="index.html">Home</a></nav>
+        </header>
+
+        <div class="card">
+            <h2>🔗 URL Scanner</h2>
+            <p class="muted">Quick heuristic check for protocol and suspicious patterns.</p>
+            <div class="field">
+                <label for="urlInput">URL</label>
+                <input id="urlInput" type="url" placeholder="https://example.com" />
+            </div>
+            <button class="btn primary" onclick="scan()">Scan</button>
+            <div id="out" class="result" style="margin-top:12px"></div>
+        </div>
+    </div>
+
+    <script>
+        async function scan(){
+            const url = document.getElementById('urlInput').value;
+            const res = await fetch('/api/url-scanner', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({url})});
+            const data = await res.json();
+            document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+        }
+    </script>
+</body>
+</html>
 <!DOCTYPE html>
 <html lang="en">
 <head>
