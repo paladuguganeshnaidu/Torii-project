@@ -10,3 +10,19 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key')
     DATABASE = DB_PATH
     TEMPLATES_AUTO_RELOAD = True
+
+from flask import Flask
+from .my_blueprints import blueprint, blueprint2  # Use relative import if my_blueprints.py is in the same directory
+
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
+
+    app.register_blueprint(blueprint)
+    app.register_blueprint(blueprint2)
+
+    return app
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(debug=True)

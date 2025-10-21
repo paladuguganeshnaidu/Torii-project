@@ -5,6 +5,7 @@ from .config import Config
 from .database import get_db, close_db, init_db
 from .db_adapter import init_database, close_db_connection
 from .auth import bp as auth_bp
+from .admin import admin_bp
 from .tools.email_analyzer import analyze_email_tool
 from .tools.url_scanner import scan_url_tool
 from .tools.password_cracker import crack_hash_tool
@@ -31,6 +32,7 @@ def create_app():
 
     # Register blueprints
     app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
 
     # Teardown
     app.teardown_appcontext(close_db)
