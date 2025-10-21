@@ -3,24 +3,79 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Torii Frontend</title>
+  <title>Torii Security Tools</title>
   <link rel="stylesheet" href="assets/css/main.css" />
-  <style>/* Fallback minimal styles if CSS fails to load */
-    body{margin:0;font-family:system-ui,Arial,sans-serif}
+  <style>
+    /* Fallback minimal styles if CSS fails to load */
+    body{margin:0;font-family:system-ui,Arial,sans-serif;background:#f6f7fb}
   </style>
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="data:," />
+  <meta name="description" content="Torii: a compact hub of security utilities (email analysis, URL scan, hash crack, SMS spam check, malware hash, and recon)." />
+  <meta name="theme-color" content="#0ea5e9" />
+  <meta name="robots" content="index,follow" />
 </head>
-<body>
-  <header>
-    <h1>Torii Security Tools</h1>
-    <p>Static landing page (demo). Use the Flask app at <code>/</code> for interactive tools.</p>
-  </header>
-  <main class="cards">
-    <a class="card" href="tool1-email-analyzer.html">Email Analyzer</a>
-    <a class="card" href="tool2-url-scanner.html">URL Scanner</a>
-    <a class="card" href="tool3-password-cracker.html">Password Cracker</a>
-    <a class="card" href="tool4-sms-spam-tester.html">SMS Spam Tester</a>
-    <a class="card" href="tool5-malware-analyzer.html">Malware Analyzer</a>
-    <a class="card" href="tool6-web-recon.html">Web Recon</a>
-  </main>
+<body class="home">
+  <div class="page">
+    <header class="top">
+      <h1>Torii</h1>
+      <p class="subtitle">Security tools at your fingertips</p>
+    </header>
+
+    <section class="search">
+      <input id="toolSearch" type="search" placeholder="Search tools… (email, url, hash, sms, malware, recon)" autocomplete="off" autofocus />
+    </section>
+
+    <section class="grid">
+      <a class="tile" href="frontend/tool1-email-analyzer.html" data-tags="email message phishing">
+        <span class="icon" aria-hidden="true">✉️</span>
+        <span class="label">Email Analyzer</span>
+      </a>
+      <a class="tile" href="frontend/tool2-url-scanner.html" data-tags="url link http https">
+        <span class="icon" aria-hidden="true">🔗</span>
+        <span class="label">URL Scanner</span>
+      </a>
+      <a class="tile" href="frontend/tool3-password-cracker.html" data-tags="hash md5 sha password">
+        <span class="icon" aria-hidden="true">🔑</span>
+        <span class="label">Password Cracker</span>
+      </a>
+      <a class="tile" href="frontend/tool4-sms-spam-tester.html" data-tags="sms message spam text">
+        <span class="icon" aria-hidden="true">📱</span>
+        <span class="label">SMS Spam Tester</span>
+      </a>
+      <a class="tile" href="frontend/tool5-malware-analyzer.html" data-tags="file malware virus hash">
+        <span class="icon" aria-hidden="true">🦠</span>
+        <span class="label">Malware Analyzer</span>
+      </a>
+      <a class="tile" href="frontend/tool6-web-recon.html" data-tags="recon domain dns whois">
+        <span class="icon" aria-hidden="true">🌐</span>
+        <span class="label">Web Recon</span>
+      </a>
+    </section>
+
+    <footer class="foot">
+      <a class="plain" href="frontend/index.html">All static pages</a>
+      <span aria-hidden="true">·</span>
+      <a class="plain" href="#" onclick="location.reload()">Refresh</a>
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      const input = document.getElementById('toolSearch');
+      if (!input) return;
+      const tiles = Array.from(document.querySelectorAll('.tile'));
+      const filter = () => {
+        const q = input.value.trim().toLowerCase();
+        tiles.forEach(t => {
+          const text = t.textContent.toLowerCase();
+          const tags = (t.dataset.tags || '').toLowerCase();
+          const show = !q || text.includes(q) || tags.includes(q);
+          t.style.display = show ? '' : 'none';
+        });
+      };
+      input.addEventListener('input', filter);
+    })();
+  </script>
 </body>
 </html>

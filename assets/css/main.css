@@ -1,5 +1,36 @@
-body{font-family:system-ui,Arial,sans-serif;margin:0;padding:24px;background:#f9fafb;color:#111}
-header{max-width:900px;margin:auto}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;max-width:900px;margin:24px auto}
-.card{display:block;background:white;border:1px solid #eee;border-radius:8px;padding:18px;text-decoration:none;color:#111;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
-.card:hover{box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+:root{
+	--bg:#f6f7fb;
+	--fg:#0b1324;
+	--muted:#6b7280;
+	--card:#ffffff;
+	--ring:#0ea5e9;
+	--border:#e5e7eb;
+}
+@media (prefers-color-scheme: dark){
+	:root{--bg:#0b1220;--fg:#e5e7eb;--muted:#9ca3af;--card:#0f172a;--ring:#38bdf8;--border:#1f2937}
+}
+
+/* Reset-ish */
+*{box-sizing:border-box}
+html,body{height:100%}
+body.home{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,Inter,Arial,sans-serif;line-height:1.5}
+a{color:inherit}
+
+.page{max-width:980px;margin:0 auto;padding:28px}
+.top{ text-align:center; margin:20px 0 8px }
+.top h1{font-size:40px;letter-spacing:.5px;margin:0}
+.top .subtitle{margin:8px 0 0;color:var(--muted)}
+
+.search{display:flex;justify-content:center;margin:18px 0 28px}
+.search input{width:min(660px,100%);padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:inherit;outline:none}
+.search input:focus{border-color:var(--ring);box-shadow:0 0 0 3px color-mix(in srgb, var(--ring) 25%, transparent)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:12px;text-decoration:none;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;transition:.18s box-shadow,.18s transform}
+.tile:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,.08)}
+.icon{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;font-size:30px;background:radial-gradient(100% 100% at 70% 20%, #fff 0%, #eaf6ff 100%);border:1px solid var(--border)}
+.label{font-weight:600}
+
+.foot{display:flex;gap:8px;justify-content:center;margin:26px 0;color:var(--muted)}
+.plain{color:var(--muted);text-decoration:none}
+.plain:hover{color:inherit}
