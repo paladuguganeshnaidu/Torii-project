@@ -44,6 +44,10 @@ database/*.sqlite
 # Env files
 .env
 
+# SSH keys / secrets
+ganes
+ganes.pub
+
 # Logs
 *.log# Python
 __pycache__/
