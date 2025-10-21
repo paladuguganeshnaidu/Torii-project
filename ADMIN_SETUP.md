@@ -22,9 +22,13 @@ Your site now has a **secure, password-protected admin panel** where you can vie
 2. **Click on your service**: `torii-project`
 3. **Go to "Environment" tab**
 4. **Click "+ Add Environment Variable"**
-5. **Add this:**
+5. **Add this (recommended - hashed):**
    - **Key**: `ADMIN_PASSWORD`
-   - **Value**: `scrypt:32768:8:1$ZR2T6bygg2eaaP7e$e5357d91ddc130081014cc791ee3633ca720e088da275e1273b404f0c3fdbee507211815ca431a35b26b860cb51e6a8a0252f64647538e4a4656eec29ce9f465`
+   - **Value**: `scrypt:32768:8:1$xgInVDOssyMWNUsh$161cba3e03e41893ab4c85979d6d146d599a793972152731eed1b28108a08553429604eb00e6c979914b0d211198ef75d774924d298e2d156c754d69345b9e90`
+
+   Or set plaintext (easiest for first run):
+   - **Key**: `ADMIN_PASSWORD`
+   - **Value**: `admin123`
 
 6. **Click "Save Changes"**
 
@@ -47,7 +51,7 @@ Your site now has a **secure, password-protected admin panel** where you can vie
 
 The default password `admin123` is **WEAK**. Change it immediately:
 
-### Generate Your Own Secure Password Hash:
+### Generate Your Own Secure Password Hash (recommended):
 
 ```powershell
 # On your laptop, run:
@@ -55,6 +59,7 @@ py -c "from werkzeug.security import generate_password_hash; print(generate_pass
 ```
 
 **Copy the output** and update `ADMIN_PASSWORD` in Render's Environment tab.
+If you prefer, you can also set `ADMIN_PASSWORD` to your plaintext value, and the app will hash it at startup.
 
 ---
 
@@ -139,7 +144,8 @@ git push origin main
 
 ### "Invalid admin password"
 - Make sure you set `ADMIN_PASSWORD` in Render Environment
-- Verify the hash is copied completely (no spaces/line breaks)
+- If you used a hash, verify it's complete (no spaces/line breaks)
+- If unsure, set `ADMIN_PASSWORD` to `admin123` (plaintext) temporarily and redeploy
 - Default password is: `admin123`
 
 ### "Please login as admin first"
