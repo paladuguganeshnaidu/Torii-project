@@ -7,6 +7,25 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $root
 
+$dotenv = Join-Path $root '.env'
+if (Test-Path $dotenv) {
+  Write-Host 'Loading environment variables from .env'
+  Get-Content $dotenv | ForEach-Object {
+    $line = $_.Trim()
+    if (-not $line -or $line.StartsWith('#')) { return }
+    $idx = $line.IndexOf('=')
+    if ($idx -gt 0) {
+      $key = $line.Substring(0, $idx).Trim()
+      $val = $line.Substring($idx + 1).Trim()
+      # Remove surrounding quotes if any
+      if (($val.StartsWith('"') -and $val.EndsWith('"')) -or ($val.StartsWith("'") -and $val.EndsWith("'"))) {
+        $val = $val.Substring(1, $val.Length - 2)
+      }
+      $env:$key = $val
+    }
+  }
+}
+
 $venv = Join-Path $root '.venv'
 $python = Join-Path $venv 'Scripts\python.exe'
 

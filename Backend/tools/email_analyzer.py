@@ -1,7 +1,10 @@
 import email
 import hashlib
 from flask import request
-import yara
+try:
+    import yara  # optional; not required for basic analysis
+except Exception:  # pragma: no cover
+    yara = None
 
 def analyze_email_tool(flask_request):
     """

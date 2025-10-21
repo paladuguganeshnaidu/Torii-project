@@ -3,14 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <title>Register</title>
-  <style> body{font-family:Arial;padding:24px;max-width:420px;margin:auto} input,button{width:100%;padding:10px;margin:6px 0} a{color:#06c} </style>
-</head>
+  <style>
+    body{font-family:Arial;padding:24px;max-width:420px;margin:auto}
+    input,button{width:100%;padding:10px;margin:6px 0}
+    a{color:#06c}
+    .flash{padding:10px;border-radius:6px;margin:8px 0}
+    .flash.error{background:#fee;color:#900;border:1px solid #f99}
+    .flash.success{background:#efe;color:#060;border:1px solid #9f9}
+    .flash.info{background:#eef;color:#006;border:1px solid #99f}
+  </style>
+  </head>
 <body>
-  <h2>Register</h2>
-  <form method="post">
-    <input name="username" placeholder="Username" />
-    <input name="password" placeholder="Password" type="password" />
-    <button type="submit">Create account</button>
+  <h2>Create your account</h2>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  <form method="post" autocomplete="off">
+    <input name="email" type="email" placeholder="Email" value="{{ email or '' }}" required />
+    <input name="mobile" type="tel" placeholder="Mobile (optional)" value="{{ mobile or '' }}" />
+    <input name="password" placeholder="Password" type="password" required />
+    <input name="confirm" placeholder="Confirm password" type="password" required />
+    <button type="submit">Sign up</button>
   </form>
   <p>Already have an account? <a href="/auth/login">Login</a></p>
 </body>

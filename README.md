@@ -56,7 +56,13 @@ API endpoints (POST):
 - /api/web-recon
 
 ## Notes
-- The auth system is a skeleton for demo purposes only (stores user in session; no password hashing or DB yet).
+- Registration now stores users in MySQL with hashed passwords. Configure the following environment variables before running to enable MySQL:
+	- `MYSQL_HOST`
+	- `MYSQL_PORT` (optional, default 3306)
+	- `MYSQL_USER`
+	- `MYSQL_PASSWORD`
+	- `MYSQL_DB`
+	If MySQL is not configured or PyMySQL not installed, registration will be disabled.
 - The tools are stub implementations returning placeholder analysis. Replace with real logic as needed.
 - The SQLite database file will be created on first run under `database/app.db`.
 
