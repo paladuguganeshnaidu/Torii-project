@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Torii-Project Directory</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            padding: 32px 40px;
+        }
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 32px;
+            letter-spacing: 1px;
+        }
+        .tree {
+            font-family: 'Fira Mono', 'Consolas', monospace;
+            font-size: 1rem;
+            color: #444;
+            line-height: 1.7;
+            white-space: pre;
+            background: #f4f6fb;
+            border-radius: 8px;
+            padding: 24px;
+            overflow-x: auto;
+            margin-bottom: 24px;
+            border: 1px solid #e2e8f0;
+        }
+        .legend {
+            margin-top: 16px;
+            font-size: 0.98rem;
+            color: #555;
+            background: #e9ecef;
+            border-radius: 6px;
+            padding: 12px 18px;
+        }
+        .legend strong {
+            color: #2b6cb0;
+        }
+        @media (max-width: 600px) {
+            .container { padding: 16px 8px; }
+            .tree { padding: 12px; font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Torii-Project Directory Structure</h1>
+        <div class="tree">
+Torii-Project/
+├─ .git/                         # Git metadata
+├─ .gitignore                    # Ignore venv, DB, caches
+├─ .nojekyll                     # Disable Jekyll on GitHub Pages
+├─ .venv/                        # Local virtual env (created by start scripts)
+├─ .vscode/
+│  ├─ html.code-snippets         # torii-html / torii-css snippets
+│  ├─ launch.json                # Debug config (debugpy)
+│  └─ tasks.json                 # Run task: “Run Torii (PowerShell)”
+├─ assets/
+│  └─ css/
+│     └─ main.css                # Root CSS for GitHub Pages + homepage UI
+├─ Backend/
+│  ├─ app.py                     # Flask app: factory, routes, API
+│  ├─ auth.py                    # Auth blueprint (register/login/logout skeleton)
+│  ├─ config.py                  # Paths, SECRET_KEY, DB config
+│  ├─ database.py                # SQLite helpers (init_db/get_db/teardown)
+│  ├─ requirements.txt           # Flask + requests
+│  ├─ templates/
+│  │  ├─ index.html              # Server-rendered dashboard (Jinja)
+│  │  ├─ login.html              # Login page
+│  │  └─ register.html           # Register page
+│  └─ tools/
+│     ├─ __init__.py             # Re-exports tool functions
+│     ├─ email_analyzer.py       # analyze_email_tool(request)
+│     ├─ url_scanner.py          # scan_url_tool(request)
+│     ├─ password_cracker.py     # crack_hash_tool(request)
+│     ├─ sms_spam_detector.py    # test_sms_tool(request)
+│     ├─ malware_analyzer.py     # analyze_file_tool(request)
+│     └─ web_recon.py            # recon_target_tool(request)
+├─ css/
+│  ├─ main.css                   # Original CSS (not used by new homepage)
+│  └─ responsive.css
+├─ database/
+│  ├─ app.db                     # Created at runtime
+│  └─ schema.sql                 # Tool logs table schema
+├─ index.html                    # Root homepage (grid tiles + search)
+├─ README.md                     # Overview + run instructions
+├─ run.py                        # Starts Flask dev server
+├─ start.bat                     # Windows cmd start script
+├─ start.ps1                     # PowerShell start script
+├─ tool1-email-analyzer.html     # Static single-page demos (legacy)
+├─ tool2-url-scanner.html
+├─ tool3-password-cracker.html
+├─ tool4-sms-spam-tester.html
+├─ tool5-malware-analyzer.html
+└─ tool6-web-recon.html
+        </div>
+        <div class="legend">
+            <strong>Legend:</strong> <br>
+            <span style="color:#2b6cb0;">Folders</span> are shown with <code>/</code>.<br>
+            <span style="color:#2b6cb0;"># Comments</span> describe each file or folder.<br>
+            <span style="color:#2b6cb0;">├─</span> and <span style="color:#2b6cb0;">└─</span> indicate tree branches.<br>
+            <br>
+            <strong>Tip:</strong> This structure helps you quickly locate project components and understand their purpose.
+        </div>
+    </div>
+</body>
+</html>
