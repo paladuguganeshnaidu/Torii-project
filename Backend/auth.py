@@ -60,25 +60,26 @@ def login():
             return render_template('login.html')
         
         try:
-            # Get user by email using DB-agnostic adapter
+            # Get user by email using DB-agnostic adapter (now returns dict)
             user = get_user_by_email(email)
-            
+
             if not user:
                 # User not found
                 flash('Invalid email or password.', 'error')
                 print(f"[LOGIN] User not found: {email}")
                 return render_template('login.html')
-            
-            # Extract user data
+
+            # Extract user data (dict expected; tuple fallback retained just in case)
             if isinstance(user, dict):
                 user_id = user.get('id')
                 user_email = user.get('email')
                 password_hash = user.get('password_hash')
             else:
-                # tuple from postgres/mysql cursor
+                # Fallback for legacy tuple return
                 user_id = user[0]
                 user_email = user[1]
-                password_hash = user[2]
+                # Most schemas: id, email, password_hash, mobile, registered_at
+                password_hash = user[2] if len(user) > 2 else None
             
             # Verify password using Werkzeug's secure hash comparison
             if check_password_hash(password_hash, password):

@@ -131,18 +131,18 @@ def create_app():
         user = get_user_by_id(user_id)
         if not user:
             return jsonify({'ok': False, 'error': 'User not found'}), 404
-        
-        # Get full user record with password_hash
+
+        # Get full user record with password_hash (adapter returns dict)
         user_full = get_user_by_email(user['email'])
         if not user_full:
             return jsonify({'ok': False, 'error': 'User not found'}), 404
         
-        # Extract password hash (handle both dict and tuple)
+        # Extract password hash (dict by default; tuple fallback supported)
         if isinstance(user_full, dict):
             password_hash = user_full.get('password_hash')
         else:
-            # tuple: (id, email, mobile, password_hash, registered_at)
-            password_hash = user_full[3] if len(user_full) > 3 else None
+            # Expected order when selected explicitly: id, email, password_hash, mobile, registered_at
+            password_hash = user_full[2] if len(user_full) > 2 else None
         
         if not password_hash:
             return jsonify({'ok': False, 'error': 'Password verification failed'}), 500

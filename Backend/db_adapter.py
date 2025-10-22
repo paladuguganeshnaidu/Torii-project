@@ -275,23 +275,52 @@ def insert_user(email, mobile, password_hash):
 
 def get_user_by_email(email):
     """
-    Get a user by email.
-    Works with PostgreSQL, MySQL, and SQLite.
+    Get a user by email and return a consistent dictionary across DBs.
+    Keys: id, email, password_hash, mobile, registered_at
     """
     conn = get_db_connection()
     db_type = g.get('db_type', 'sqlite')
-    
+
     try:
         if db_type == 'postgres':
             with conn.cursor() as cur:
-                cur.execute("SELECT * FROM users WHERE email = %s", (email,))
-                return cur.fetchone()
+                cur.execute(
+                    "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE email = %s",
+                    (email,)
+                )
+                row = cur.fetchone()
+                if not row:
+                    return None
+                return {
+                    'id': row[0],
+                    'email': row[1],
+                    'password_hash': row[2],
+                    'mobile': row[3],
+                    'registered_at': str(row[4]) if len(row) > 4 else None,
+                }
         elif db_type == 'mysql':
             with conn.cursor() as cur:
-                cur.execute("SELECT * FROM users WHERE email = %s", (email,))
-                return cur.fetchone()
+                cur.execute(
+                    "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE email = %s",
+                    (email,)
+                )
+                row = cur.fetchone()
+                if not row:
+                    return None
+                if isinstance(row, dict):
+                    return row
+                return {
+                    'id': row[0],
+                    'email': row[1],
+                    'password_hash': row[2],
+                    'mobile': row[3],
+                    'registered_at': str(row[4]) if len(row) > 4 else None,
+                }
         else:  # sqlite
-            cursor = conn.execute("SELECT * FROM users WHERE email = ?", (email,))
+            cursor = conn.execute(
+                "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE email = ?",
+                (email,)
+            )
             row = cursor.fetchone()
             if row:
                 return dict(row)
