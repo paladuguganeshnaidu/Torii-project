@@ -27,6 +27,9 @@
     /* Profile dropdown styles */
     .profile-container{position:absolute;top:10px;right:10px;display:none}
     .profile-container.show{display:block}
+    .login-btn{position:absolute;top:10px;right:10px;padding:8px 16px;background:#667eea;color:white;border-radius:20px;text-decoration:none;font-size:14px;font-weight:500;transition:all 0.2s;display:none}
+    .login-btn.show{display:inline-block}
+    .login-btn:hover{background:#5568d3;transform:translateY(-1px);box-shadow:0 4px 12px rgba(102,126,234,0.4)}
     .profile-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:all 0.2s}
     .profile-btn:hover{background:#f0f0f0;border-color:#999}
     .profile-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;display:grid;place-items:center;font-weight:600;font-size:14px}
@@ -46,6 +49,9 @@
 <body class="home">
   <div class="page">
     <header class="top">
+      <!-- Login button (shows when logged out) -->
+      <a href="/auth/login" id="loginBtn" class="login-btn">Login</a>
+      
       <!-- Profile indicator (shows when logged in) -->
       <div id="profileContainer" class="profile-container">
         <div class="profile-btn" onclick="toggleProfileDropdown()">
@@ -134,23 +140,32 @@
         const response = await fetch('/api/user-session');
         const data = await response.json();
         
+        const profileContainer = document.getElementById('profileContainer');
+        const profileEmail = document.getElementById('profileEmail');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const authLinks = document.getElementById('authLinks');
+        const loginBtn = document.getElementById('loginBtn');
+        
         if (data.logged_in) {
-          // Show profile indicator
-          const profileContainer = document.getElementById('profileContainer');
-          const profileEmail = document.getElementById('profileEmail');
-          const profileAvatar = document.getElementById('profileAvatar');
-          const authLinks = document.getElementById('authLinks');
-          
-          // Get first letter of email for avatar
+          // User is logged in - show profile
           const firstLetter = (data.email || 'U')[0].toUpperCase();
           
           profileEmail.textContent = data.email;
           profileAvatar.textContent = firstLetter;
           profileContainer.classList.add('show');
           authLinks.style.display = 'none';
+          loginBtn.classList.remove('show');
+        } else {
+          // User is logged out - show login button
+          loginBtn.classList.add('show');
+          profileContainer.classList.remove('show');
+          authLinks.style.display = 'block';
         }
       } catch (error) {
-        console.log('Not logged in or session check failed');
+        console.log('Session check failed:', error);
+        // Default to logged out state
+        document.getElementById('loginBtn').classList.add('show');
+        document.getElementById('authLinks').style.display = 'block';
       }
     }
     

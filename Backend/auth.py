@@ -105,6 +105,6 @@ def login():
 
 @bp.route('/logout')
 def logout():
-    session.pop('user', None)
-    flash('Logged out.', 'info')
+    """Logout user and clear session."""
+    session.clear()  # Clear all session data
     return redirect(url_for('index'))
