@@ -70,7 +70,74 @@ def view_users():
             ORDER BY registered_at DESC
         ''')
         users = cursor.fetchall()
+        
+        # Debug logging
+        print(f"[ADMIN DEBUG] Found {len(users)} users in database")
+        for user in users:
+            print(f"[ADMIN DEBUG] User: {user}")
+            
+    except Exception as e:
+        print(f"[ADMIN ERROR] Failed to fetch users: {e}")
+        users = []
     finally:
         conn.close()
     
     return render_template('admin/users.html', users=users)
+
+@admin_bp.route('/debug-db')
+def debug_db():
+    """Debug endpoint to check database state (admin only)."""
+    from flask import jsonify
+    import os
+    
+    # Check if admin is authenticated
+    if not session.get('admin_authenticated'):
+        return jsonify({'error': 'Unauthorized - Please login as admin'}), 401
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    try:
+        # Get database file path
+        from .config import Config
+        db_path = Config.DATABASE
+        
+        # Check if using SQLite or MySQL
+        mysql_host = os.getenv('MYSQL_HOST')
+        db_type = "MySQL" if mysql_host else "SQLite"
+        
+        # Get all tables
+        if db_type == "SQLite":
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        else:
+            cursor.execute("SHOW TABLES")
+        tables = cursor.fetchall()
+        
+        # Get all users
+        cursor.execute('SELECT id, email, mobile, registered_at FROM users ORDER BY registered_at DESC')
+        users = cursor.fetchall()
+        
+        # Get user count
+        cursor.execute('SELECT COUNT(*) FROM users')
+        user_count = cursor.fetchone()[0]
+        
+        return jsonify({
+            'database_type': db_type,
+            'database_path': db_path if db_type == "SQLite" else mysql_host,
+            'database_exists': os.path.exists(db_path) if db_type == "SQLite" else True,
+            'tables': [t[0] for t in tables],
+            'user_count': user_count,
+            'users': [
+                {
+                    'id': u[0],
+                    'email': u[1],
+                    'mobile': u[2],
+                    'registered_at': str(u[3])
+                }
+                for u in users
+            ]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
