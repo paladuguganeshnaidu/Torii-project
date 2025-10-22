@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Torii · StegoShield Inspector</title>
+    <link rel="stylesheet" href="assets/css/main.css?v=2" />
+</head>
+<body class="home">
+    <div class="app">
+        <header>
+            <div class="brand"><span class="logo" aria-hidden="true"></span><span class="title">Torii</span></div>
+            <nav>
+                <a href="index.html">Home</a>
+                <span aria-hidden="true">·</span>
+                <a href="/auth/login">Login</a>
+                <span aria-hidden="true">·</span>
+                <a href="/auth/register">Register</a>
+            </nav>
+        </header>
+
+        <div class="card">
+            <h2>🛡️ StegoShield Inspector</h2>
+            <p class="muted">Analyze images for hidden text, virus signatures, malware, or suspicious data.</p>
+            
+            <div class="field">
+                <label for="imageFile">Upload Image (PNG/JPG)</label>
+                <input id="imageFile" type="file" accept="image/png,image/jpeg,image/jpg" />
+            </div>
+
+            <div class="field">
+                <label for="inspectType">Inspection Type</label>
+                <select id="inspectType">
+                    <option value="">-- Select Type --</option>
+                    <option value="txt">Text Analysis</option>
+                    <option value="virus">Virus Detection</option>
+                    <option value="malware">Malware Scan</option>
+                    <option value="suspicious">Suspicious Data</option>
+                </select>
+            </div>
+
+            <div class="field" id="textInputField" style="display:none;">
+                <label for="customText">Enter Text to Embed (Optional)</label>
+                <input id="customText" type="text" placeholder="Your text here..." />
+            </div>
+
+            <div class="field" id="virusTypeField" style="display:none;">
+                <label for="virusType">Virus Type (if applicable)</label>
+                <select id="virusType">
+                    <option value="prank">Prank</option>
+                    <option value="manipulate">Manipulate</option>
+                    <option value="real">Real Virus</option>
+                </select>
+            </div>
+
+            <button class="btn primary" onclick="inspectImage()">Inspect & Analyze</button>
+            <div id="out" class="result" style="margin-top:12px"></div>
+            <div id="downloadSection" style="display:none; margin-top:12px;">
+                <p><strong>Processed image ready:</strong></p>
+                <a id="downloadLink" class="btn" download="output_image.png">Download Processed Image</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const typeSelect = document.getElementById('inspectType');
+        const textField = document.getElementById('textInputField');
+        const virusField = document.getElementById('virusTypeField');
+
+        typeSelect.addEventListener('change', () => {
+            const val = typeSelect.value;
+            textField.style.display = (val === 'txt') ? 'block' : 'none';
+            virusField.style.display = (['virus','malware','suspicious'].includes(val)) ? 'block' : 'none';
+        });
+
+        async function inspectImage(){
+            const fileInput = document.getElementById('imageFile');
+            const inspectType = document.getElementById('inspectType').value;
+            const customText = document.getElementById('customText').value;
+            const virusType = document.getElementById('virusType').value;
+            const outDiv = document.getElementById('out');
+            const downloadSection = document.getElementById('downloadSection');
+
+            if(!fileInput.files.length){
+                outDiv.textContent = 'Error: Please upload an image.';
+                return;
+            }
+            if(!inspectType){
+                outDiv.textContent = 'Error: Please select an inspection type.';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            formData.append('inspect_type', inspectType);
+            if(customText) formData.append('custom_text', customText);
+            if(virusType) formData.append('virus_type', virusType);
+
+            outDiv.textContent = 'Processing...';
+            downloadSection.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/stegoshield-inspector', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if(data.ok){
+                    outDiv.textContent = JSON.stringify(data, null, 2);
+                    if(data.image_base64){
+                        const link = document.getElementById('downloadLink');
+                        link.href = 'data:image/png;base64,' + data.image_base64;
+                        downloadSection.style.display = 'block';
+                    }
+                } else {
+                    outDiv.textContent = 'Error: ' + (data.error || 'Unknown error');
+                }
+            } catch(err){
+                outDiv.textContent = 'Network error: ' + err.message;
+            }
+        }
+    </script>
+</body>
+</html>

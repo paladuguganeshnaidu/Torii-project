@@ -12,6 +12,7 @@ from .tools.password_cracker import crack_hash_tool
 from .tools.sms_spam_detector import test_sms_tool
 from .tools.malware_analyzer import analyze_file_tool
 from .tools.web_recon import recon_target_tool
+from .tools.stegoshield_inspector import analyze_stegoshield_tool
 
 
 def create_app():
@@ -63,6 +64,7 @@ def create_app():
         'tool4-sms-spam-tester.html',
         'tool5-malware-analyzer.html',
         'tool6-web-recon.html',
+        'tool7-stegoshield-inspector.html',
         'directory.html',
     }
 
@@ -113,6 +115,12 @@ def create_app():
     def api_web_recon():
         result = recon_target_tool(request)
         _log_tool('web-recon', request, result)
+        return jsonify(result)
+
+    @app.post('/api/stegoshield-inspector')
+    def api_stegoshield_inspector():
+        result = analyze_stegoshield_tool(request)
+        _log_tool('stegoshield-inspector', request, result)
         return jsonify(result)
 
     def _log_tool(tool_name, req, result):
