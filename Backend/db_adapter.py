@@ -10,20 +10,30 @@ from flask import g
 
 # Try to import PostgreSQL support
 try:
-    import psycopg2
-    from psycopg2.extras import DictCursor as PgDictCursor
+    import importlib
+    psycopg2 = importlib.import_module('psycopg2')
+    try:
+        PgDictCursor = importlib.import_module('psycopg2.extras').DictCursor
+    except Exception:
+        PgDictCursor = None
     POSTGRES_AVAILABLE = True
-except ImportError:
+except Exception:
     POSTGRES_AVAILABLE = False
     psycopg2 = None
     PgDictCursor = None
 
 # Try to import MySQL support
 try:
-    import pymysql
-    from pymysql.cursors import DictCursor
+    # Import dynamically to avoid linter/IDE import resolution errors when the
+    # optional dependency isn't installed in every environment.
+    import importlib
+    pymysql = importlib.import_module('pymysql')
+    try:
+        DictCursor = importlib.import_module('pymysql.cursors').DictCursor
+    except Exception:
+        DictCursor = None
     MYSQL_AVAILABLE = True
-except ImportError:
+except Exception:
     MYSQL_AVAILABLE = False
     pymysql = None
     DictCursor = None
@@ -288,3 +298,82 @@ def get_user_by_email(email):
             return None
     except Exception:
         return None
+
+
+def get_user_by_id(user_id):
+    """
+    Get a user by ID.
+    Works with PostgreSQL, MySQL, and SQLite.
+    """
+    conn = get_db_connection()
+    db_type = g.get('db_type', 'sqlite')
+    
+    try:
+        if db_type == 'postgres':
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, email, mobile, registered_at FROM users WHERE id = %s", (user_id,))
+                row = cur.fetchone()
+                if not row:
+                    return None
+                return {
+                    'id': row[0],
+                    'email': row[1],
+                    'mobile': row[2],
+                    'registered_at': str(row[3])
+                }
+        elif db_type == 'mysql':
+            with conn.cursor() as cur:
+                cur.execute("SELECT id, email, mobile, registered_at FROM users WHERE id = %s", (user_id,))
+                row = cur.fetchone()
+                if not row:
+                    return None
+                if isinstance(row, dict):
+                    return row
+                return {
+                    'id': row[0],
+                    'email': row[1],
+                    'mobile': row[2],
+                    'registered_at': str(row[3])
+                }
+        else:  # sqlite
+            cursor = conn.execute("SELECT id, email, mobile, registered_at FROM users WHERE id = ?", (user_id,))
+            row = cursor.fetchone()
+            if row:
+                return dict(row)
+            return None
+    except Exception:
+        return None
+
+
+def update_user_password(user_id, new_password_hash):
+    """
+    Update user's password.
+    Works with PostgreSQL, MySQL, and SQLite.
+    """
+    conn = get_db_connection()
+    db_type = g.get('db_type', 'sqlite')
+    
+    try:
+        if db_type == 'postgres':
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE users SET password_hash = %s WHERE id = %s",
+                    (new_password_hash, user_id)
+                )
+            conn.commit()
+        elif db_type == 'mysql':
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE users SET password_hash = %s WHERE id = %s",
+                    (new_password_hash, user_id)
+                )
+            conn.commit()
+        else:  # sqlite
+            conn.execute(
+                "UPDATE users SET password_hash = ? WHERE id = ?",
+                (new_password_hash, user_id)
+            )
+            conn.commit()
+        return True
+    except Exception:
+        return False

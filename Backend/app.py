@@ -1,9 +1,10 @@
 import os
 from flask import Flask, jsonify, render_template, request, send_from_directory, redirect, url_for, session
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from .config import Config, PROJECT_ROOT
 from .database import get_db, close_db, init_db
-from .db_adapter import init_database, close_db_connection
+from .db_adapter import init_database, close_db_connection, get_user_by_id, get_user_by_email, update_user_password
 from .auth import bp as auth_bp
 from .admin import admin_bp
 from .tools.email_analyzer import analyze_email_tool
@@ -68,6 +69,7 @@ def create_app():
         'tool7-stegoshield-inspector.html',
         'tool8-stegoshield-extractor.html',
         'directory.html',
+        'profile.html',
     }
 
     @app.route('/<path:filename>')
@@ -88,6 +90,75 @@ def create_app():
                 'user_id': session.get('user_id')
             })
         return jsonify({'logged_in': False})
+
+    # Profile API
+    @app.get('/api/profile')
+    def api_get_profile():
+        """Get current user profile."""
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'ok': False, 'error': 'Not logged in'}), 401
+        
+        user = get_user_by_id(user_id)
+        if not user:
+            return jsonify({'ok': False, 'error': 'User not found'}), 404
+        
+        return jsonify({'ok': True, 'user': user})
+
+    @app.post('/api/change-password')
+    def api_change_password():
+        """Change user password."""
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'ok': False, 'error': 'Not logged in'}), 401
+        
+        data = request.get_json(silent=True) or {}
+        current_password = data.get('current_password', '')
+        new_password = data.get('new_password', '')
+        confirm_password = data.get('confirm_password', '')
+        
+        # Validation
+        if not current_password or not new_password:
+            return jsonify({'ok': False, 'error': 'All fields are required'})
+        
+        if new_password != confirm_password:
+            return jsonify({'ok': False, 'error': 'New passwords do not match'})
+        
+        if len(new_password) < 6:
+            return jsonify({'ok': False, 'error': 'Password must be at least 6 characters'})
+        
+        # Get user and verify current password
+        user = get_user_by_id(user_id)
+        if not user:
+            return jsonify({'ok': False, 'error': 'User not found'}), 404
+        
+        # Get full user record with password_hash
+        user_full = get_user_by_email(user['email'])
+        if not user_full:
+            return jsonify({'ok': False, 'error': 'User not found'}), 404
+        
+        # Extract password hash (handle both dict and tuple)
+        if isinstance(user_full, dict):
+            password_hash = user_full.get('password_hash')
+        else:
+            # tuple: (id, email, mobile, password_hash, registered_at)
+            password_hash = user_full[3] if len(user_full) > 3 else None
+        
+        if not password_hash:
+            return jsonify({'ok': False, 'error': 'Password verification failed'}), 500
+        
+        # Verify current password
+        if not check_password_hash(password_hash, current_password):
+            return jsonify({'ok': False, 'error': 'Current password is incorrect'})
+        
+        # Update password
+        new_hash = generate_password_hash(new_password)
+        success = update_user_password(user_id, new_hash)
+        
+        if success:
+            return jsonify({'ok': True, 'message': 'Password changed successfully'})
+        else:
+            return jsonify({'ok': False, 'error': 'Failed to update password'}), 500
 
     # API endpoints
     @app.post('/api/email-analyzer')
