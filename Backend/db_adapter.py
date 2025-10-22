@@ -1,11 +1,22 @@
 """
-Unified database adapter that supports both MySQL and SQLite.
+Unified database adapter that supports PostgreSQL, MySQL, and SQLite.
+- Uses PostgreSQL if DATABASE_URL is configured (Render production)
 - Uses MySQL if MYSQL_HOST is configured (local development with Workbench)
-- Falls back to SQLite if no MySQL config (Render deployment)
+- Falls back to SQLite if no config (basic local development)
 """
 import os
 import sqlite3
 from flask import g
+
+# Try to import PostgreSQL support
+try:
+    import psycopg2
+    from psycopg2.extras import DictCursor as PgDictCursor
+    POSTGRES_AVAILABLE = True
+except ImportError:
+    POSTGRES_AVAILABLE = False
+    psycopg2 = None
+    PgDictCursor = None
 
 # Try to import MySQL support
 try:
@@ -21,13 +32,21 @@ except ImportError:
 def get_db_connection():
     """
     Get a database connection.
-    Returns MySQL if configured, otherwise SQLite.
+    Priority: PostgreSQL > MySQL > SQLite
     """
     # Check if we already have a connection in this request
     if 'db_conn' in g:
         return g.db_conn
     
-    # Try MySQL first
+    # Try PostgreSQL first (for Render production)
+    if POSTGRES_AVAILABLE and os.environ.get('DATABASE_URL'):
+        conn = _get_postgres_connection()
+        if conn:
+            g.db_conn = conn
+            g.db_type = 'postgres'
+            return conn
+    
+    # Try MySQL second (for local development)
     if MYSQL_AVAILABLE and os.environ.get('MYSQL_HOST'):
         conn = _get_mysql_connection()
         if conn:
@@ -35,11 +54,28 @@ def get_db_connection():
             g.db_type = 'mysql'
             return conn
     
-    # Fall back to SQLite
+    # Fall back to SQLite (basic local dev)
     conn = _get_sqlite_connection()
     g.db_conn = conn
     g.db_type = 'sqlite'
     return conn
+
+
+def _get_postgres_connection():
+    """Get PostgreSQL connection if configured."""
+    try:
+        database_url = os.environ.get('DATABASE_URL')
+        # Render uses postgres:// but psycopg2 needs postgresql://
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        
+        conn = psycopg2.connect(database_url)
+        conn.autocommit = False  # Use transactions
+        print("[DB] Connected to PostgreSQL")
+        return conn
+    except Exception as e:
+        print(f"[DB] PostgreSQL connection failed: {e}")
+        return None
 
 
 def _get_mysql_connection():
@@ -88,14 +124,58 @@ def close_db_connection(e=None):
 
 
 def init_database(app):
-    """Initialize database tables for both MySQL and SQLite."""
+    """Initialize database tables for PostgreSQL, MySQL, or SQLite."""
     # Determine which database we're using
+    using_postgres = POSTGRES_AVAILABLE and os.environ.get('DATABASE_URL')
     using_mysql = MYSQL_AVAILABLE and os.environ.get('MYSQL_HOST')
     
-    if using_mysql:
+    if using_postgres:
+        _init_postgres_tables(app)
+    elif using_mysql:
         _init_mysql_tables(app)
     else:
         _init_sqlite_tables(app)
+
+
+def _init_postgres_tables(app):
+    """Create PostgreSQL tables."""
+    try:
+        conn = _get_postgres_connection()
+        if not conn:
+            app.logger.info('PostgreSQL not configured; skipping Postgres init')
+            return
+        
+        with conn.cursor() as cur:
+            # Users table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    email VARCHAR(255) NOT NULL UNIQUE,
+                    mobile VARCHAR(20),
+                    password_hash VARCHAR(255) NOT NULL,
+                    registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            # Tool logs table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS tool_logs (
+                    id SERIAL PRIMARY KEY,
+                    tool_name VARCHAR(100),
+                    input TEXT,
+                    result TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            conn.commit()
+            app.logger.info('PostgreSQL tables initialized successfully')
+        
+        conn.close()
+    except Exception as e:
+        app.logger.warning(f'PostgreSQL table init failed: {e}')
+        import traceback
+        traceback.print_exc()
 
 
 def _init_mysql_tables(app):
@@ -148,13 +228,20 @@ def _init_sqlite_tables(app):
 def insert_user(email, mobile, password_hash):
     """
     Insert a new user into the database.
-    Works with both MySQL and SQLite.
+    Works with PostgreSQL, MySQL, and SQLite.
     """
     conn = get_db_connection()
     db_type = g.get('db_type', 'sqlite')
     
     try:
-        if db_type == 'mysql':
+        if db_type == 'postgres':
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO users (email, mobile, password_hash) VALUES (%s, %s, %s)",
+                    (email, mobile, password_hash)
+                )
+            conn.commit()
+        elif db_type == 'mysql':
             with conn.cursor() as cur:
                 cur.execute(
                     "INSERT INTO users (email, mobile, password_hash) VALUES (%s, %s, %s)",
@@ -179,13 +266,17 @@ def insert_user(email, mobile, password_hash):
 def get_user_by_email(email):
     """
     Get a user by email.
-    Works with both MySQL and SQLite.
+    Works with PostgreSQL, MySQL, and SQLite.
     """
     conn = get_db_connection()
     db_type = g.get('db_type', 'sqlite')
     
     try:
-        if db_type == 'mysql':
+        if db_type == 'postgres':
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+                return cur.fetchone()
+        elif db_type == 'mysql':
             with conn.cursor() as cur:
                 cur.execute("SELECT * FROM users WHERE email = %s", (email,))
                 return cur.fetchone()
