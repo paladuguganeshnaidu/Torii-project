@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Torii · StegoShield Extractor Suite</title>
+    <link rel="stylesheet" href="assets/css/main.css?v=2" />
+</head>
+<body class="home">
+    <div class="app">
+        <header>
+            <div class="brand"><span class="logo" aria-hidden="true"></span><span class="title">Torii</span></div>
+            <nav>
+                <a href="index.html">Home</a>
+                <span aria-hidden="true">·</span>
+                <a href="/auth/login">Login</a>
+                <span aria-hidden="true">·</span>
+                <a href="/auth/register">Register</a>
+            </nav>
+        </header>
+
+        <div class="card">
+            <h2>🔍 StegoShield Extractor Suite</h2>
+            <p class="muted">Comprehensive steganography analysis tool that detects and extracts hidden data, viruses, or malware from images.</p>
+            
+            <div class="field">
+                <label for="imageFile">Upload Image to Analyze</label>
+                <input id="imageFile" type="file" accept="image/png,image/jpeg,image/jpg" />
+                <small style="color:#888;">Upload an image that may contain hidden content or threats</small>
+            </div>
+
+            <div class="field">
+                <label for="analysisDepth">Analysis Depth</label>
+                <select id="analysisDepth">
+                    <option value="quick">Quick Scan (Fast)</option>
+                    <option value="standard" selected>Standard Analysis</option>
+                    <option value="deep">Deep Scan (Thorough)</option>
+                </select>
+                <small style="color:#888;">Deeper scans take longer but detect more threats</small>
+            </div>
+
+            <button class="btn primary" onclick="analyzeImage()">🔍 Analyze Image</button>
+            
+            <div id="statusBox" style="display:none; margin-top:12px; padding:12px; background:#f0f8ff; border-left:4px solid #0ea5e9; border-radius:4px;">
+                <strong>Status:</strong> <span id="statusText">Processing...</span>
+            </div>
+
+            <div id="threatAlert" style="display:none; margin-top:12px; padding:12px; border-radius:4px;">
+                <div style="font-size:20px; margin-bottom:8px;">⚠️ <strong id="threatLevel">THREAT DETECTED</strong></div>
+                <div id="threatDetails"></div>
+            </div>
+
+            <div id="resultsSection" style="display:none; margin-top:12px;">
+                <h3>Analysis Results</h3>
+                <div id="analysisResults" class="result" style="word-wrap:break-word; white-space:pre-wrap; overflow:auto; max-height:300px; padding:12px; background:#f9f9f9; border-radius:6px;"></div>
+                
+                <h3 style="margin-top:20px;">Extracted Content</h3>
+                <div id="extractedContent" class="result" style="word-wrap:break-word; white-space:pre-wrap; overflow:auto; max-height:200px; padding:12px; background:#fff3cd; border-radius:6px;"></div>
+            </div>
+
+            <div id="actionButtons" style="display:none; margin-top:16px; display:flex; gap:12px; flex-wrap:wrap;">
+                <button class="btn" onclick="downloadCleanedImage()" id="cleanBtn" style="background:#28a745; color:white;">
+                    🧹 Download Cleaned Image
+                </button>
+                <button class="btn" onclick="downloadReport()" style="background:#17a2b8; color:white;">
+                    📄 Download Analysis Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAnalysisData = null;
+
+        async function analyzeImage(){
+            const fileInput = document.getElementById('imageFile');
+            const analysisDepth = document.getElementById('analysisDepth').value;
+            const statusBox = document.getElementById('statusBox');
+            const statusText = document.getElementById('statusText');
+            const threatAlert = document.getElementById('threatAlert');
+            const resultsSection = document.getElementById('resultsSection');
+            const actionButtons = document.getElementById('actionButtons');
+
+            if(!fileInput.files.length){
+                alert('Please upload an image first.');
+                return;
+            }
+
+            // Show status
+            statusBox.style.display = 'block';
+            statusText.textContent = 'Analyzing image for hidden content and threats...';
+            threatAlert.style.display = 'none';
+            resultsSection.style.display = 'none';
+            actionButtons.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            formData.append('analysis_depth', analysisDepth);
+
+            try {
+                const res = await fetch('/api/stegoshield-extractor', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                currentAnalysisData = data;
+
+                if(data.ok){
+                    statusText.textContent = 'Analysis complete!';
+                    
+                    // Display threat level
+                    displayThreatLevel(data);
+                    
+                    // Display analysis results
+                    displayAnalysisResults(data);
+                    
+                    // Display extracted content
+                    displayExtractedContent(data);
+                    
+                    // Show action buttons
+                    actionButtons.style.display = 'flex';
+                    
+                } else {
+                    statusText.textContent = 'Error: ' + (data.error || 'Analysis failed');
+                    statusBox.style.background = '#fee';
+                }
+            } catch(err){
+                statusText.textContent = 'Network error: ' + err.message;
+                statusBox.style.background = '#fee';
+            }
+        }
+
+        function displayThreatLevel(data){
+            const threatAlert = document.getElementById('threatAlert');
+            const threatLevel = document.getElementById('threatLevel');
+            const threatDetails = document.getElementById('threatDetails');
+            
+            const level = data.threat_level || 'UNKNOWN';
+            
+            if(level.includes('HIGH')){
+                threatAlert.style.background = '#f8d7da';
+                threatAlert.style.borderLeft = '4px solid #dc3545';
+                threatLevel.textContent = '🚨 HIGH THREAT DETECTED';
+                threatLevel.style.color = '#721c24';
+            } else if(level.includes('MEDIUM')){
+                threatAlert.style.background = '#fff3cd';
+                threatAlert.style.borderLeft = '4px solid #ffc107';
+                threatLevel.textContent = '⚠️ MEDIUM THREAT DETECTED';
+                threatLevel.style.color = '#856404';
+            } else {
+                threatAlert.style.background = '#d4edda';
+                threatAlert.style.borderLeft = '4px solid #28a745';
+                threatLevel.textContent = '✅ LOW THREAT';
+                threatLevel.style.color = '#155724';
+            }
+            
+            threatDetails.innerHTML = `<p>${level}</p>`;
+            
+            if(data.recommendations && data.recommendations.length > 0){
+                threatDetails.innerHTML += '<p><strong>Recommendations:</strong></p><ul style="margin:8px 0; padding-left:20px;">';
+                data.recommendations.slice(0, 3).forEach(rec => {
+                    threatDetails.innerHTML += `<li>${rec}</li>`;
+                });
+                threatDetails.innerHTML += '</ul>';
+            }
+            
+            threatAlert.style.display = 'block';
+        }
+
+        function displayAnalysisResults(data){
+            const resultsDiv = document.getElementById('analysisResults');
+            const results = data.analysis_summary || {};
+            
+            let html = '';
+            html += `<strong>📊 Analysis Summary:</strong>\n\n`;
+            html += `Entropy: ${results.entropy || 'N/A'}\n`;
+            html += `Chi-Square Value: ${results.chi_square_value || 'N/A'}\n`;
+            html += `Anomaly Score: ${results.anomaly_score || 'N/A'}\n`;
+            html += `LSB Pattern Detected: ${results.lsb_detected ? 'Yes' : 'No'}\n`;
+            
+            resultsDiv.textContent = html;
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        function displayExtractedContent(data){
+            const extractedDiv = document.getElementById('extractedContent');
+            const extracted = data.extracted_content || {};
+            
+            if(!extracted.detected){
+                extractedDiv.textContent = '✅ No hidden content detected.';
+                return;
+            }
+            
+            let html = '🔍 Hidden Content Found:\n\n';
+            
+            if(extracted.lsb_data){
+                html += `📝 LSB Extracted Text:\n${extracted.lsb_data}\n\n`;
+            }
+            
+            if(extracted.metadata && extracted.metadata.length > 0){
+                html += `📋 Suspicious Metadata:\n`;
+                extracted.metadata.forEach(item => {
+                    html += `- Tag ${item.tag}: ${item.size} bytes\n`;
+                });
+                html += '\n';
+            }
+            
+            if(extracted.pattern_data){
+                html += `⚠️ Pattern Analysis:\n${extracted.pattern_data}\n`;
+            }
+            
+            extractedDiv.textContent = html;
+        }
+
+        function downloadCleanedImage(){
+            if(!currentAnalysisData || !currentAnalysisData.cleaned_image_base64){
+                alert('No cleaned image available.');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.href = 'data:image/png;base64,' + currentAnalysisData.cleaned_image_base64;
+            link.download = 'cleaned_image.png';
+            link.click();
+        }
+
+        function downloadReport(){
+            if(!currentAnalysisData){
+                alert('No analysis data available.');
+                return;
+            }
+            
+            const reportText = JSON.stringify(currentAnalysisData, null, 2);
+            const blob = new Blob([reportText], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'stegoshield_analysis_report.json';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

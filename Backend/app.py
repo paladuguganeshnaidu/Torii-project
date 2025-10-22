@@ -13,6 +13,7 @@ from .tools.sms_spam_detector import test_sms_tool
 from .tools.malware_analyzer import analyze_file_tool
 from .tools.web_recon import recon_target_tool
 from .tools.stegoshield_inspector import analyze_stegoshield_tool
+from .tools.stegoshield_extractor import analyze_stegoshield_extractor
 
 
 def create_app():
@@ -65,6 +66,7 @@ def create_app():
         'tool5-malware-analyzer.html',
         'tool6-web-recon.html',
         'tool7-stegoshield-inspector.html',
+        'tool8-stegoshield-extractor.html',
         'directory.html',
     }
 
@@ -121,6 +123,12 @@ def create_app():
     def api_stegoshield_inspector():
         result = analyze_stegoshield_tool(request)
         _log_tool('stegoshield-inspector', request, result)
+        return jsonify(result)
+
+    @app.post('/api/stegoshield-extractor')
+    def api_stegoshield_extractor():
+        result = analyze_stegoshield_extractor(request)
+        _log_tool('stegoshield-extractor', request, result)
         return jsonify(result)
 
     def _log_tool(tool_name, req, result):
