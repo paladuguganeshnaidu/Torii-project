@@ -74,13 +74,8 @@ def create_app():
     def serve_static_pages(filename):
         if filename in _ALLOWED_STATIC_PAGES:
             return send_from_directory(PROJECT_ROOT, filename)
-        # Fall through to 404 for unknown static files to avoid exposing the repo
-        return render_template('index.html')
-
-    # Simple server-rendered tool routes (optional)
-    @app.route('/tool/<name>')
-    def tool_page(name):
-        return render_template('index.html', active_tool=name)
+        # Redirect to modern tile-based homepage for any unknown routes
+        return redirect('/')
 
     # API endpoints
     @app.post('/api/email-analyzer')

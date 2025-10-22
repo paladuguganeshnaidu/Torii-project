@@ -16,11 +16,15 @@ import base64
 import os
 
 try:
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import letter
-    from reportlab.lib.utils import ImageReader
+    import importlib
+    _reportlab_pdfgen = importlib.import_module('reportlab.pdfgen')
+    canvas = _reportlab_pdfgen.canvas
+    _pagesizes = importlib.import_module('reportlab.lib.pagesizes')
+    letter = getattr(_pagesizes, 'letter')
+    _utils = importlib.import_module('reportlab.lib.utils')
+    ImageReader = getattr(_utils, 'ImageReader')
     REPORTLAB_AVAILABLE = True
-except ImportError:
+except Exception:
     REPORTLAB_AVAILABLE = False
 
 
