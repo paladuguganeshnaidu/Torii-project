@@ -63,6 +63,17 @@
                 <small style="color:#888;" id="prankHelp">Prank: Generates HTML file that shows fake "Error Transferring Data" popup when opened</small>
             </div>
 
+            <div class="field">
+                <label for="outputFormat">Output Format</label>
+                <select id="outputFormat">
+                    <option value="png">PNG Image</option>
+                    <option value="jpg">JPG Image</option>
+                    <option value="html">HTML File (for prank)</option>
+                    <option value="pdf">PDF Document</option>
+                </select>
+                <small style="color:#888;">HTML format recommended for prank mode; PNG/JPG for regular images</small>
+            </div>
+
             <button class="btn primary" onclick="inspectImage()">Process Image</button>
             <div id="out" class="result" style="margin-top:12px"></div>
             <div id="downloadSection" style="display:none; margin-top:12px;">
@@ -128,6 +139,7 @@
             const customText = document.getElementById('customText').value;
             const virusType = document.getElementById('virusType').value;
             const stegoMode = document.getElementById('stegoMode').value;
+            const outputFormat = document.getElementById('outputFormat').value;
             const outDiv = document.getElementById('out');
             const downloadSection = document.getElementById('downloadSection');
             const downloadLink = document.getElementById('downloadLink');
@@ -146,6 +158,7 @@
             formData.append('image', fileInput.files[0]);
             formData.append('inspect_type', inspectType);
             formData.append('stego_mode', stegoMode);
+            formData.append('output_format', outputFormat);
             if(customText) formData.append('custom_text', customText);
             if(virusType) formData.append('virus_type', virusType);
 
@@ -163,18 +176,26 @@
                     outDiv.textContent = JSON.stringify(data, null, 2);
                     
                     if(data.prank_html){
-                        // Prank mode: download HTML file
+                        // HTML format: download HTML file
                         const blob = new Blob([data.prank_html], {type: 'text/html'});
                         const url = URL.createObjectURL(blob);
                         downloadLink.href = url;
                         downloadLink.download = 'image_viewer.html';
-                        downloadTitle.textContent = '🎭 Prank HTML ready! Send this to your friend:';
+                        downloadTitle.textContent = '🎭 HTML File Ready! Send this to your friend:';
+                        downloadSection.style.display = 'block';
+                    } else if(data.pdf_base64){
+                        // PDF format
+                        downloadLink.href = 'data:application/pdf;base64,' + data.pdf_base64;
+                        downloadLink.download = 'processed_document.pdf';
+                        downloadTitle.textContent = '📄 PDF Document ready:';
                         downloadSection.style.display = 'block';
                     } else if(data.image_base64){
-                        // Normal image download
-                        downloadLink.href = 'data:image/png;base64,' + data.image_base64;
-                        downloadLink.download = 'processed_image.png';
-                        downloadTitle.textContent = 'Processed image ready:';
+                        // Image format (PNG/JPG)
+                        const format = data.output_format || 'png';
+                        const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
+                        downloadLink.href = 'data:' + mimeType + ';base64,' + data.image_base64;
+                        downloadLink.download = 'processed_image.' + format;
+                        downloadTitle.textContent = `${format.toUpperCase()} Image ready:`;
                         downloadSection.style.display = 'block';
                     }
                     

@@ -7,12 +7,21 @@ Features:
 - Prank mode: generates HTML that shows fake error popup
 - Manipulate mode: adds warning overlays
 - Real virus detection placeholder
+- Multiple output formats: PNG, JPG, HTML, PDF
 """
 from flask import request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 import io
 import base64
 import os
+
+try:
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.utils import ImageReader
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
 
 
 def analyze_stegoshield_tool(req):
@@ -42,6 +51,7 @@ def analyze_stegoshield_tool(req):
         custom_text = req.form.get('custom_text', '').strip()
         virus_type = req.form.get('virus_type', 'prank').strip().lower()
         stego_mode = req.form.get('stego_mode', 'encode').strip().lower()
+        output_format = req.form.get('output_format', 'png').strip().lower()
         
         if not inspect_type:
             return {"ok": False, "error": "inspect_type is required"}
@@ -54,15 +64,29 @@ def analyze_stegoshield_tool(req):
             if stego_mode == "encode" and custom_text:
                 # Embed text using LSB steganography
                 img_encoded = _encode_text_lsb(img, custom_text)
-                img_base64 = _image_to_base64(img_encoded)
-                return {
-                    "ok": True,
-                    "message": "Text hidden using LSB steganography",
-                    "inspect_type": inspect_type,
-                    "stego_mode": "encode",
-                    "hidden_text_length": len(custom_text),
-                    "image_base64": img_base64
-                }
+                
+                if output_format == "pdf":
+                    pdf_base64 = _generate_image_pdf(img_encoded, "TEXT HIDDEN VIA STEGANOGRAPHY")
+                    return {
+                        "ok": True,
+                        "message": "Text hidden using LSB steganography (PDF)",
+                        "inspect_type": inspect_type,
+                        "stego_mode": "encode",
+                        "output_format": "pdf",
+                        "hidden_text_length": len(custom_text),
+                        "pdf_base64": pdf_base64
+                    }
+                else:
+                    img_base64 = _image_to_base64(img_encoded, output_format)
+                    return {
+                        "ok": True,
+                        "message": "Text hidden using LSB steganography",
+                        "inspect_type": inspect_type,
+                        "stego_mode": "encode",
+                        "output_format": output_format,
+                        "hidden_text_length": len(custom_text),
+                        "image_base64": img_base64
+                    }
             elif stego_mode == "decode":
                 # Extract hidden text from image
                 hidden_text = _decode_text_lsb(img)
@@ -70,42 +94,95 @@ def analyze_stegoshield_tool(req):
                 draw = ImageDraw.Draw(img)
                 font = _get_font()
                 draw.text((10, 30), f"Decoded: {hidden_text[:50]}...", fill="lime", font=font)
-                img_base64 = _image_to_base64(img)
-                return {
-                    "ok": True,
-                    "message": "Text extracted from image",
-                    "inspect_type": inspect_type,
-                    "stego_mode": "decode",
-                    "hidden_text": hidden_text,
-                    "image_base64": img_base64
-                }
+                
+                if output_format == "pdf":
+                    pdf_base64 = _generate_image_pdf(img, f"DECODED TEXT: {hidden_text[:100]}")
+                    return {
+                        "ok": True,
+                        "message": "Text extracted from image (PDF)",
+                        "inspect_type": inspect_type,
+                        "stego_mode": "decode",
+                        "output_format": "pdf",
+                        "hidden_text": hidden_text,
+                        "pdf_base64": pdf_base64
+                    }
+                else:
+                    img_base64 = _image_to_base64(img, output_format)
+                    return {
+                        "ok": True,
+                        "message": "Text extracted from image",
+                        "inspect_type": inspect_type,
+                        "stego_mode": "decode",
+                        "output_format": output_format,
+                        "hidden_text": hidden_text,
+                        "image_base64": img_base64
+                    }
             else:
                 # Just overlay text visually
                 draw = ImageDraw.Draw(img)
                 font = _get_font()
                 text = custom_text if custom_text else "(no text provided)"
                 draw.text((10, 30), f"Text: {text}", fill="white", font=font)
-                img_base64 = _image_to_base64(img)
-                return {
-                    "ok": True,
-                    "message": "Text overlay added",
-                    "inspect_type": inspect_type,
-                    "custom_text": custom_text,
-                    "image_base64": img_base64
-                }
+                
+                if output_format == "pdf":
+                    pdf_base64 = _generate_image_pdf(img, "TEXT OVERLAY")
+                    return {
+                        "ok": True,
+                        "message": "Text overlay PDF ready",
+                        "inspect_type": inspect_type,
+                        "output_format": "pdf",
+                        "custom_text": custom_text,
+                        "pdf_base64": pdf_base64
+                    }
+                else:
+                    img_base64 = _image_to_base64(img, output_format)
+                    return {
+                        "ok": True,
+                        "message": "Text overlay added",
+                        "inspect_type": inspect_type,
+                        "output_format": output_format,
+                        "custom_text": custom_text,
+                        "image_base64": img_base64
+                    }
         
         elif inspect_type in ["virus", "malware", "suspicious"]:
             if virus_type == "prank":
-                # Generate prank HTML that triggers fake error popup
-                html_trigger = _generate_prank_html(img)
-                return {
-                    "ok": True,
-                    "message": "Prank mode activated! Download the HTML file and send to your friend.",
-                    "inspect_type": inspect_type,
-                    "virus_type": "prank",
-                    "prank_html": html_trigger,
-                    "instructions": "Send the downloaded HTML file. When opened, it shows a fake error popup."
-                }
+                # Generate output based on format
+                if output_format == "html":
+                    # Generate prank HTML that triggers fake error popup
+                    html_trigger = _generate_prank_html(img)
+                    return {
+                        "ok": True,
+                        "message": "Prank HTML file ready! Send to your friend.",
+                        "inspect_type": inspect_type,
+                        "virus_type": "prank",
+                        "output_format": "html",
+                        "prank_html": html_trigger,
+                        "instructions": "Send the downloaded HTML file. When opened, it shows a fake error popup."
+                    }
+                elif output_format == "pdf":
+                    # Generate PDF with prank message
+                    pdf_base64 = _generate_prank_pdf(img)
+                    return {
+                        "ok": True,
+                        "message": "Prank PDF ready!",
+                        "inspect_type": inspect_type,
+                        "virus_type": "prank",
+                        "output_format": "pdf",
+                        "pdf_base64": pdf_base64
+                    }
+                else:
+                    # For PNG/JPG: clean image without overlay (so it looks normal)
+                    img_base64 = _image_to_base64(img, output_format)
+                    return {
+                        "ok": True,
+                        "message": "Clean image ready (use HTML format for prank popup)",
+                        "inspect_type": inspect_type,
+                        "virus_type": "prank",
+                        "output_format": output_format,
+                        "image_base64": img_base64,
+                        "note": "Image has no overlay. Switch to HTML format for prank popup."
+                    }
             
             elif virus_type == "manipulate":
                 # Add warning overlay
@@ -113,14 +190,27 @@ def analyze_stegoshield_tool(req):
                 font = _get_font()
                 draw.text((10, 30), "⚠️ SUSPICIOUS CODE DETECTED", fill="orange", font=font)
                 draw.text((10, 60), "Manipulative content found", fill="orange", font=font)
-                img_base64 = _image_to_base64(img)
-                return {
-                    "ok": True,
-                    "message": "Manipulative content warning added",
-                    "inspect_type": inspect_type,
-                    "virus_type": "manipulate",
-                    "image_base64": img_base64
-                }
+                
+                if output_format == "pdf":
+                    pdf_base64 = _generate_image_pdf(img, "MANIPULATIVE CONTENT WARNING")
+                    return {
+                        "ok": True,
+                        "message": "Manipulative content warning PDF ready",
+                        "inspect_type": inspect_type,
+                        "virus_type": "manipulate",
+                        "output_format": "pdf",
+                        "pdf_base64": pdf_base64
+                    }
+                else:
+                    img_base64 = _image_to_base64(img, output_format)
+                    return {
+                        "ok": True,
+                        "message": "Manipulative content warning added",
+                        "inspect_type": inspect_type,
+                        "virus_type": "manipulate",
+                        "output_format": output_format,
+                        "image_base64": img_base64
+                    }
             
             elif virus_type == "real":
                 # Real virus detection placeholder
@@ -128,14 +218,27 @@ def analyze_stegoshield_tool(req):
                 font = _get_font()
                 draw.text((10, 30), "🚨 REAL VIRUS DETECTED 🚨", fill="red", font=font)
                 draw.text((10, 60), "Quarantine recommended", fill="red", font=font)
-                img_base64 = _image_to_base64(img)
-                return {
-                    "ok": True,
-                    "message": "Real virus signature detected (simulated)",
-                    "inspect_type": inspect_type,
-                    "virus_type": "real",
-                    "image_base64": img_base64
-                }
+                
+                if output_format == "pdf":
+                    pdf_base64 = _generate_image_pdf(img, "REAL VIRUS DETECTED - QUARANTINE")
+                    return {
+                        "ok": True,
+                        "message": "Real virus signature PDF ready",
+                        "inspect_type": inspect_type,
+                        "virus_type": "real",
+                        "output_format": "pdf",
+                        "pdf_base64": pdf_base64
+                    }
+                else:
+                    img_base64 = _image_to_base64(img, output_format)
+                    return {
+                        "ok": True,
+                        "message": "Real virus signature detected (simulated)",
+                        "inspect_type": inspect_type,
+                        "virus_type": "real",
+                        "output_format": output_format,
+                        "image_base64": img_base64
+                    }
         
         return {"ok": False, "error": f"Unknown configuration"}
     
@@ -151,10 +254,11 @@ def _get_font():
         return ImageFont.load_default()
 
 
-def _image_to_base64(img):
+def _image_to_base64(img, output_format='png'):
     """Convert PIL Image to base64 string."""
     buffer = io.BytesIO()
-    img.save(buffer, format="PNG")
+    fmt = 'JPEG' if output_format == 'jpg' else 'PNG'
+    img.save(buffer, format=fmt)
     buffer.seek(0)
     return base64.b64encode(buffer.read()).decode('utf-8')
 
@@ -373,3 +477,90 @@ def _generate_prank_html(img):
 </html>"""
     
     return html_content
+
+
+def _generate_prank_pdf(img):
+    """
+    Generate a PDF with the image and a fake virus warning message.
+    Falls back to simple text if reportlab not available.
+    """
+    if not REPORTLAB_AVAILABLE:
+        return None
+    
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    
+    # Title
+    c.setFont("Helvetica-Bold", 24)
+    c.setFillColorRGB(0.8, 0, 0)
+    c.drawCentredString(width/2, height - 100, "⚠️ SYSTEM ALERT")
+    
+    # Message
+    c.setFont("Helvetica", 14)
+    c.setFillColorRGB(0, 0, 0)
+    c.drawCentredString(width/2, height - 140, "Error transferring data. File may be corrupted.")
+    c.drawCentredString(width/2, height - 165, "Error Code: 0x80070057")
+    
+    # Add image
+    img_buffer = io.BytesIO()
+    img.save(img_buffer, format='PNG')
+    img_buffer.seek(0)
+    img_reader = ImageReader(img_buffer)
+    
+    # Calculate image dimensions to fit on page
+    img_width, img_height = img.size
+    max_width = width - 100
+    max_height = height - 300
+    scale = min(max_width / img_width, max_height / img_height)
+    new_width = img_width * scale
+    new_height = img_height * scale
+    
+    x = (width - new_width) / 2
+    y = height - 250 - new_height
+    
+    c.drawImage(img_reader, x, y, width=new_width, height=new_height)
+    
+    c.save()
+    buffer.seek(0)
+    return base64.b64encode(buffer.read()).decode('utf-8')
+
+
+def _generate_image_pdf(img, title):
+    """
+    Generate a PDF with an image and custom title.
+    """
+    if not REPORTLAB_AVAILABLE:
+        return None
+    
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    
+    # Title
+    c.setFont("Helvetica-Bold", 20)
+    c.setFillColorRGB(0.8, 0, 0)
+    c.drawCentredString(width/2, height - 80, title)
+    
+    # Add image
+    img_buffer = io.BytesIO()
+    img.save(img_buffer, format='PNG')
+    img_buffer.seek(0)
+    img_reader = ImageReader(img_buffer)
+    
+    # Calculate image dimensions
+    img_width, img_height = img.size
+    max_width = width - 100
+    max_height = height - 200
+    scale = min(max_width / img_width, max_height / img_height)
+    new_width = img_width * scale
+    new_height = img_height * scale
+    
+    x = (width - new_width) / 2
+    y = height - 150 - new_height
+    
+    c.drawImage(img_reader, x, y, width=new_width, height=new_height)
+    
+    c.save()
+    buffer.seek(0)
+    return base64.b64encode(buffer.read()).decode('utf-8')
