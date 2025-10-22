@@ -315,14 +315,15 @@ def _assess_threat_level(results):
 
 def _extract_hidden_content(img, pixels, analysis_results):
     """Attempt to extract hidden content"""
-    extracted = {"detected": False}
+    extracted = {"detected": False, "hidden_text": None}
     
-    # Only extract if suspicious
-    if analysis_results.get('lsb_suspicious', False):
-        lsb_data = _extract_lsb_text(pixels)
-        if lsb_data:
-            extracted["lsb_data"] = lsb_data
-            extracted["detected"] = True
+    # Always try to extract LSB text (even if not flagged as suspicious)
+    lsb_data = _extract_lsb_text(pixels)
+    if lsb_data:
+        extracted["lsb_data"] = lsb_data
+        extracted["hidden_text"] = lsb_data  # Primary display field
+        extracted["detected"] = True
+        extracted["extraction_method"] = "LSB Steganography"
     
     # Check metadata
     if hasattr(img, 'info') and img.info:
@@ -334,42 +335,49 @@ def _extract_hidden_content(img, pixels, analysis_results):
             extracted["metadata"] = suspicious_meta
             extracted["detected"] = True
     
-    # Pattern-based extraction
+    # Pattern-based extraction for high threats
     if "HIGH" in _assess_threat_level(analysis_results):
-        extracted["pattern_data"] = "Suspicious executable patterns detected in image data"
+        if not extracted.get("hidden_text"):
+            extracted["pattern_data"] = "Suspicious executable patterns detected in image data"
         extracted["detected"] = True
     
     return extracted
 
 
 def _extract_lsb_text(pixels):
-    """Extract text hidden in LSB"""
+    """Extract text hidden in LSB using same format as StegoShield Inspector"""
     try:
-        # Extract bits from LSB of red channel
-        bits = []
-        for p in pixels[:10000]:  # Sample
-            bits.append(p[0] & 1)
+        # Extract bits from all RGB channels (same as Inspector encoding)
+        binary_text = ""
+        for pixel in pixels:
+            r, g, b = pixel
+            binary_text += str(r & 1)
+            binary_text += str(g & 1)
+            binary_text += str(b & 1)
         
-        # Group into bytes
-        text_bytes = []
-        for i in range(0, len(bits)-7, 8):
-            byte = 0
-            for j in range(8):
-                byte |= (bits[i+j] << j)
-            text_bytes.append(byte)
+        # Convert binary to text
+        text = ""
+        for i in range(0, len(binary_text), 8):
+            byte = binary_text[i:i+8]
+            if len(byte) == 8:
+                try:
+                    char = chr(int(byte, 2))
+                    text += char
+                    # Check for delimiter (same as Inspector)
+                    if text.endswith("<<<END>>>"):
+                        return text[:-9]  # Remove delimiter and return
+                except:
+                    continue
             
-            # Stop at null or after reasonable length
-            if byte == 0 or len(text_bytes) > 200:
+            # Limit to prevent processing entire image
+            if len(text) > 10000:
                 break
         
-        # Try to decode
-        text = bytes(text_bytes).decode('utf-8', errors='ignore')
-        printable = ''.join(c for c in text if c.isprintable() or c.isspace())
-        
-        # Return if meaningful
-        if len(printable.strip()) > 10:
-            return printable[:200] + "..." if len(printable) > 200 else printable
-    except:
+        # Return text if found something meaningful
+        cleaned = ''.join(c for c in text if c.isprintable() or c.isspace())
+        if len(cleaned.strip()) > 5:
+            return cleaned.strip()
+    except Exception as e:
         pass
     
     return ""
