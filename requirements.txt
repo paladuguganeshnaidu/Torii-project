@@ -1,6 +1,8 @@
 Flask
+Flask-Cors
 requests
 pymysql
+psycopg2-binary>=2.9.9
 gunicorn
 werkzeug
 python-dotenv
@@ -9,3 +11,4 @@ dnspython
 pillow
 reportlab
 cryptography
+whois
