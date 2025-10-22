@@ -2,25 +2,31 @@
 StegoShield Inspector Tool
 
 Analyzes uploaded images for hidden text, virus signatures, malware, or suspicious data.
-Based on the original Tkinter-based image processor, adapted for Flask API.
+Features:
+- Text embedding via LSB steganography (encode/decode)
+- Prank mode: generates HTML that shows fake error popup
+- Manipulate mode: adds warning overlays
+- Real virus detection placeholder
 """
 from flask import request, jsonify
 from PIL import Image, ImageDraw, ImageFont
 import io
 import base64
+import os
 
 
 def analyze_stegoshield_tool(req):
     """
-    Process uploaded image with text overlay or virus markers.
+    Process uploaded image with text overlay, steganography, or prank triggers.
     
     Expected form fields:
     - image: uploaded file (PNG/JPG)
     - inspect_type: txt | virus | malware | suspicious
     - custom_text: (optional) text to embed if inspect_type=txt
     - virus_type: prank | manipulate | real (if inspect_type in [virus, malware, suspicious])
+    - stego_mode: encode | decode (for text steganography)
     
-    Returns JSON with analysis result and base64-encoded processed image.
+    Returns JSON with analysis result and base64-encoded processed image or HTML trigger.
     """
     try:
         # Validate file upload
@@ -35,61 +41,335 @@ def analyze_stegoshield_tool(req):
         inspect_type = req.form.get('inspect_type', '').strip().lower()
         custom_text = req.form.get('custom_text', '').strip()
         virus_type = req.form.get('virus_type', 'prank').strip().lower()
+        stego_mode = req.form.get('stego_mode', 'encode').strip().lower()
         
         if not inspect_type:
             return {"ok": False, "error": "inspect_type is required"}
         
         # Open image
         img = Image.open(file.stream).convert("RGB")
-        draw = ImageDraw.Draw(img)
         
-        # Use default font (you can improve with truetype if available)
-        try:
-            font = ImageFont.truetype("arial.ttf", 20)
-        except:
-            font = ImageFont.load_default()
-        
-        y_offset = 30
-        overlay_text = ""
-        overlay_color = "white"
-        
-        # Process based on inspection type
+        # Handle different inspection types
         if inspect_type == "txt":
-            if custom_text:
-                overlay_text = f"Text: {custom_text}"
-                overlay_color = "white"
+            if stego_mode == "encode" and custom_text:
+                # Embed text using LSB steganography
+                img_encoded = _encode_text_lsb(img, custom_text)
+                img_base64 = _image_to_base64(img_encoded)
+                return {
+                    "ok": True,
+                    "message": "Text hidden using LSB steganography",
+                    "inspect_type": inspect_type,
+                    "stego_mode": "encode",
+                    "hidden_text_length": len(custom_text),
+                    "image_base64": img_base64
+                }
+            elif stego_mode == "decode":
+                # Extract hidden text from image
+                hidden_text = _decode_text_lsb(img)
+                # Also add visual overlay
+                draw = ImageDraw.Draw(img)
+                font = _get_font()
+                draw.text((10, 30), f"Decoded: {hidden_text[:50]}...", fill="lime", font=font)
+                img_base64 = _image_to_base64(img)
+                return {
+                    "ok": True,
+                    "message": "Text extracted from image",
+                    "inspect_type": inspect_type,
+                    "stego_mode": "decode",
+                    "hidden_text": hidden_text,
+                    "image_base64": img_base64
+                }
             else:
-                overlay_text = "Text: (no text provided)"
-                overlay_color = "gray"
+                # Just overlay text visually
+                draw = ImageDraw.Draw(img)
+                font = _get_font()
+                text = custom_text if custom_text else "(no text provided)"
+                draw.text((10, 30), f"Text: {text}", fill="white", font=font)
+                img_base64 = _image_to_base64(img)
+                return {
+                    "ok": True,
+                    "message": "Text overlay added",
+                    "inspect_type": inspect_type,
+                    "custom_text": custom_text,
+                    "image_base64": img_base64
+                }
+        
         elif inspect_type in ["virus", "malware", "suspicious"]:
-            virus_label = {
-                "prank": "Prank Virus",
-                "manipulate": "Manipulative Code",
-                "real": "Real Virus Detected"
-            }.get(virus_type, "Unknown")
-            overlay_text = f"Type: {virus_label}"
-            overlay_color = "red"
-        else:
-            return {"ok": False, "error": f"Unknown inspect_type: {inspect_type}"}
+            if virus_type == "prank":
+                # Generate prank HTML that triggers fake error popup
+                html_trigger = _generate_prank_html(img)
+                return {
+                    "ok": True,
+                    "message": "Prank mode activated! Download the HTML file and send to your friend.",
+                    "inspect_type": inspect_type,
+                    "virus_type": "prank",
+                    "prank_html": html_trigger,
+                    "instructions": "Send the downloaded HTML file. When opened, it shows a fake error popup."
+                }
+            
+            elif virus_type == "manipulate":
+                # Add warning overlay
+                draw = ImageDraw.Draw(img)
+                font = _get_font()
+                draw.text((10, 30), "⚠️ SUSPICIOUS CODE DETECTED", fill="orange", font=font)
+                draw.text((10, 60), "Manipulative content found", fill="orange", font=font)
+                img_base64 = _image_to_base64(img)
+                return {
+                    "ok": True,
+                    "message": "Manipulative content warning added",
+                    "inspect_type": inspect_type,
+                    "virus_type": "manipulate",
+                    "image_base64": img_base64
+                }
+            
+            elif virus_type == "real":
+                # Real virus detection placeholder
+                draw = ImageDraw.Draw(img)
+                font = _get_font()
+                draw.text((10, 30), "🚨 REAL VIRUS DETECTED 🚨", fill="red", font=font)
+                draw.text((10, 60), "Quarantine recommended", fill="red", font=font)
+                img_base64 = _image_to_base64(img)
+                return {
+                    "ok": True,
+                    "message": "Real virus signature detected (simulated)",
+                    "inspect_type": inspect_type,
+                    "virus_type": "real",
+                    "image_base64": img_base64
+                }
         
-        # Draw text on image
-        draw.text((10, y_offset), overlay_text, fill=overlay_color, font=font)
-        
-        # Convert processed image to base64
-        buffer = io.BytesIO()
-        img.save(buffer, format="PNG")
-        buffer.seek(0)
-        img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
-        
-        return {
-            "ok": True,
-            "message": "Image processed successfully",
-            "inspect_type": inspect_type,
-            "overlay_text": overlay_text,
-            "virus_type": virus_type if inspect_type in ["virus", "malware", "suspicious"] else None,
-            "custom_text": custom_text if inspect_type == "txt" else None,
-            "image_base64": img_base64
-        }
+        return {"ok": False, "error": f"Unknown configuration"}
     
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+def _get_font():
+    """Get a font for drawing text."""
+    try:
+        return ImageFont.truetype("arial.ttf", 20)
+    except:
+        return ImageFont.load_default()
+
+
+def _image_to_base64(img):
+    """Convert PIL Image to base64 string."""
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+    return base64.b64encode(buffer.read()).decode('utf-8')
+
+
+def _encode_text_lsb(img, text):
+    """
+    Hide text in image using LSB (Least Significant Bit) steganography.
+    Embeds text in the least significant bits of RGB pixel values.
+    """
+    # Add delimiter to mark end of message
+    text_with_delim = text + "<<<END>>>"
+    binary_text = ''.join(format(ord(char), '08b') for char in text_with_delim)
+    
+    pixels = list(img.getdata())
+    new_pixels = []
+    text_index = 0
+    
+    for pixel in pixels:
+        if text_index < len(binary_text):
+            # Modify RGB values
+            r, g, b = pixel
+            if text_index < len(binary_text):
+                r = (r & ~1) | int(binary_text[text_index])
+                text_index += 1
+            if text_index < len(binary_text):
+                g = (g & ~1) | int(binary_text[text_index])
+                text_index += 1
+            if text_index < len(binary_text):
+                b = (b & ~1) | int(binary_text[text_index])
+                text_index += 1
+            new_pixels.append((r, g, b))
+        else:
+            new_pixels.append(pixel)
+    
+    new_img = Image.new(img.mode, img.size)
+    new_img.putdata(new_pixels)
+    return new_img
+
+
+def _decode_text_lsb(img):
+    """
+    Extract hidden text from image using LSB steganography.
+    """
+    pixels = list(img.getdata())
+    binary_text = ""
+    
+    for pixel in pixels:
+        r, g, b = pixel
+        binary_text += str(r & 1)
+        binary_text += str(g & 1)
+        binary_text += str(b & 1)
+    
+    # Convert binary to text
+    text = ""
+    for i in range(0, len(binary_text), 8):
+        byte = binary_text[i:i+8]
+        if len(byte) == 8:
+            char = chr(int(byte, 2))
+            text += char
+            # Check for delimiter
+            if text.endswith("<<<END>>>"):
+                return text[:-9]  # Remove delimiter
+    
+    return text if text else "(no hidden text found)"
+
+
+def _generate_prank_html(img):
+    """
+    Generate HTML file that shows the image and triggers a fake error popup.
+    When your friend opens this HTML, they'll see the error message.
+    """
+    img_base64 = _image_to_base64(img)
+    
+    html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Image</title>
+    <style>
+        body {{
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }}
+        img {{
+            max-width: 90%;
+            height: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }}
+        .error-popup {{
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 3px solid #d32f2f;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+            z-index: 9999;
+            min-width: 400px;
+            animation: shake 0.5s;
+        }}
+        @keyframes shake {{
+            0%, 100% {{ transform: translate(-50%, -50%) rotate(0deg); }}
+            25% {{ transform: translate(-50%, -50%) rotate(-2deg); }}
+            75% {{ transform: translate(-50%, -50%) rotate(2deg); }}
+        }}
+        .error-icon {{
+            font-size: 48px;
+            color: #d32f2f;
+            text-align: center;
+            margin-bottom: 10px;
+        }}
+        .error-title {{
+            font-size: 24px;
+            font-weight: bold;
+            color: #d32f2f;
+            text-align: center;
+            margin-bottom: 15px;
+        }}
+        .error-message {{
+            font-size: 16px;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }}
+        .error-code {{
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }}
+        .error-button {{
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }}
+        .error-button:hover {{
+            background: #b71c1c;
+        }}
+        .overlay {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 9998;
+        }}
+    </style>
+</head>
+<body>
+    <img src="data:image/png;base64,{img_base64}" alt="Image" />
+    
+    <div class="overlay" id="overlay"></div>
+    <div class="error-popup" id="errorPopup">
+        <div class="error-icon">⚠️</div>
+        <div class="error-title">ERROR TRANSFERRING DATA</div>
+        <div class="error-message">
+            Unable to complete the data transfer operation.<br>
+            The connection was interrupted or the file may be corrupted.
+        </div>
+        <div class="error-code">
+            Error Code: 0x80070057<br>
+            Status: TRANSFER_FAILED
+        </div>
+        <button class="error-button" onclick="closeError()">OK</button>
+    </div>
+
+    <script>
+        // Show popup after a short delay for dramatic effect
+        setTimeout(function() {{
+            document.getElementById('errorPopup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+            
+            // Play system error sound (if browser allows)
+            try {{
+                var audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZQA4RV7Dn7bJgGQc/l9nz0YAyBiZ9zu/cjzoIHG/A7+CXRwwTY7Tn6rNdGAhBmNny0n0wBSh+zu7ekjgII3G/7uCVRAwSZrXm6rNcGAdAmNny03wwBSh+zu7ejDoHInG/7uCURQsTZrXm6rJcGAc/mNny03wwBSh9zu7djjoHInG/7uCUQQsTZrXm6rJcGAc/mNny03wwBSh9zu7djjoHInG/7uCUQQsTZrXm6rJcGAc/mNny03wwBSh9zu7djjoHInG/7uCUQQsTZrXm6rJcGAc/mNny03wwBSh9zu7djjoHInG/7uCUQQsTZrXm6rJcGAc/mNny03wwBSh9zu7djjoHInG/7uCUQQsTZrXm6rJcGAc/mNny03wwBSh9zu7djjoHInG/7uCUQQsTZrXm6rJcGAc/mNny03wwBSh9zu7djjoHInG/7uCUQQsTZrXm6rJcGAc/mNny03wwBSh9zu7djjoHInG/7uCUQQsTZrXm6rJcGAc/mNny03wwBSh9zu7djjoH');
+                audio.play();
+            }} catch(e) {{}}
+        }}, 1000);
+        
+        function closeError() {{
+            document.getElementById('errorPopup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }}
+        
+        // Easter egg: clicking image multiple times shows another message
+        var clickCount = 0;
+        document.querySelector('img').addEventListener('click', function() {{
+            clickCount++;
+            if(clickCount === 5) {{
+                alert('Just kidding! This is a harmless prank 😄\\n\\nNo data was transferred or lost.\\nYour friend got pranked! 🎉');
+                clickCount = 0;
+            }}
+        }});
+    </script>
+</body>
+</html>"""
+    
+    return html_content

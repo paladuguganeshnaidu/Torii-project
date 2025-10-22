@@ -21,7 +21,7 @@
 
         <div class="card">
             <h2>🛡️ StegoShield Inspector</h2>
-            <p class="muted">Analyze images for hidden text, virus signatures, malware, or suspicious data.</p>
+            <p class="muted">Hide secret text in images (steganography) or create prank files with fake error popups.</p>
             
             <div class="field">
                 <label for="imageFile">Upload Image (PNG/JPG)</label>
@@ -32,32 +32,42 @@
                 <label for="inspectType">Inspection Type</label>
                 <select id="inspectType">
                     <option value="">-- Select Type --</option>
-                    <option value="txt">Text Analysis</option>
-                    <option value="virus">Virus Detection</option>
-                    <option value="malware">Malware Scan</option>
+                    <option value="txt">Text Steganography</option>
+                    <option value="virus">Prank / Virus Mode</option>
+                    <option value="malware">Malware Analysis</option>
                     <option value="suspicious">Suspicious Data</option>
                 </select>
             </div>
 
-            <div class="field" id="textInputField" style="display:none;">
-                <label for="customText">Enter Text to Embed (Optional)</label>
-                <input id="customText" type="text" placeholder="Your text here..." />
-            </div>
-
-            <div class="field" id="virusTypeField" style="display:none;">
-                <label for="virusType">Virus Type (if applicable)</label>
-                <select id="virusType">
-                    <option value="prank">Prank</option>
-                    <option value="manipulate">Manipulate</option>
-                    <option value="real">Real Virus</option>
+            <div class="field" id="stegoModeField" style="display:none;">
+                <label for="stegoMode">Steganography Mode</label>
+                <select id="stegoMode">
+                    <option value="encode">Hide Text (Encode)</option>
+                    <option value="decode">Extract Text (Decode)</option>
                 </select>
             </div>
 
-            <button class="btn primary" onclick="inspectImage()">Inspect & Analyze</button>
+            <div class="field" id="textInputField" style="display:none;">
+                <label for="customText">Enter Secret Text to Hide</label>
+                <textarea id="customText" rows="3" placeholder="Your secret message here..."></textarea>
+                <small style="color:#888;">Text will be hidden in image pixels using LSB steganography (invisible to the eye)</small>
+            </div>
+
+            <div class="field" id="virusTypeField" style="display:none;">
+                <label for="virusType">Select Mode</label>
+                <select id="virusType">
+                    <option value="prank">🎭 Prank Mode (Fake Error Popup)</option>
+                    <option value="manipulate">⚠️ Manipulative Warning</option>
+                    <option value="real">🚨 Real Virus Alert</option>
+                </select>
+                <small style="color:#888;" id="prankHelp">Prank: Generates HTML file that shows fake "Error Transferring Data" popup when opened</small>
+            </div>
+
+            <button class="btn primary" onclick="inspectImage()">Process Image</button>
             <div id="out" class="result" style="margin-top:12px"></div>
             <div id="downloadSection" style="display:none; margin-top:12px;">
-                <p><strong>Processed image ready:</strong></p>
-                <a id="downloadLink" class="btn" download="output_image.png">Download Processed Image</a>
+                <p><strong id="downloadTitle">Processed result ready:</strong></p>
+                <a id="downloadLink" class="btn" download="output_image.png">Download File</a>
             </div>
         </div>
     </div>
@@ -66,11 +76,50 @@
         const typeSelect = document.getElementById('inspectType');
         const textField = document.getElementById('textInputField');
         const virusField = document.getElementById('virusTypeField');
+        const stegoModeField = document.getElementById('stegoModeField');
+        const stegoModeSelect = document.getElementById('stegoMode');
+        const prankHelp = document.getElementById('prankHelp');
+        const virusTypeSelect = document.getElementById('virusType');
 
         typeSelect.addEventListener('change', () => {
             const val = typeSelect.value;
-            textField.style.display = (val === 'txt') ? 'block' : 'none';
-            virusField.style.display = (['virus','malware','suspicious'].includes(val)) ? 'block' : 'none';
+            
+            if(val === 'txt') {
+                stegoModeField.style.display = 'block';
+                textField.style.display = 'block';
+                virusField.style.display = 'none';
+                updateTextFieldVisibility();
+            } else if(['virus','malware','suspicious'].includes(val)) {
+                stegoModeField.style.display = 'none';
+                textField.style.display = 'none';
+                virusField.style.display = 'block';
+            } else {
+                stegoModeField.style.display = 'none';
+                textField.style.display = 'none';
+                virusField.style.display = 'none';
+            }
+        });
+
+        stegoModeSelect.addEventListener('change', updateTextFieldVisibility);
+
+        function updateTextFieldVisibility() {
+            if(typeSelect.value === 'txt') {
+                if(stegoModeSelect.value === 'decode') {
+                    textField.style.display = 'none';
+                } else {
+                    textField.style.display = 'block';
+                }
+            }
+        }
+
+        virusTypeSelect.addEventListener('change', () => {
+            if(virusTypeSelect.value === 'prank') {
+                prankHelp.textContent = 'Prank: Generates HTML file that shows fake "Error Transferring Data" popup when opened';
+            } else if(virusTypeSelect.value === 'manipulate') {
+                prankHelp.textContent = 'Manipulate: Adds warning overlay to image';
+            } else {
+                prankHelp.textContent = 'Real: Simulates virus detection alert';
+            }
         });
 
         async function inspectImage(){
@@ -78,8 +127,11 @@
             const inspectType = document.getElementById('inspectType').value;
             const customText = document.getElementById('customText').value;
             const virusType = document.getElementById('virusType').value;
+            const stegoMode = document.getElementById('stegoMode').value;
             const outDiv = document.getElementById('out');
             const downloadSection = document.getElementById('downloadSection');
+            const downloadLink = document.getElementById('downloadLink');
+            const downloadTitle = document.getElementById('downloadTitle');
 
             if(!fileInput.files.length){
                 outDiv.textContent = 'Error: Please upload an image.';
@@ -93,6 +145,7 @@
             const formData = new FormData();
             formData.append('image', fileInput.files[0]);
             formData.append('inspect_type', inspectType);
+            formData.append('stego_mode', stegoMode);
             if(customText) formData.append('custom_text', customText);
             if(virusType) formData.append('virus_type', virusType);
 
@@ -108,10 +161,25 @@
 
                 if(data.ok){
                     outDiv.textContent = JSON.stringify(data, null, 2);
-                    if(data.image_base64){
-                        const link = document.getElementById('downloadLink');
-                        link.href = 'data:image/png;base64,' + data.image_base64;
+                    
+                    if(data.prank_html){
+                        // Prank mode: download HTML file
+                        const blob = new Blob([data.prank_html], {type: 'text/html'});
+                        const url = URL.createObjectURL(blob);
+                        downloadLink.href = url;
+                        downloadLink.download = 'image_viewer.html';
+                        downloadTitle.textContent = '🎭 Prank HTML ready! Send this to your friend:';
                         downloadSection.style.display = 'block';
+                    } else if(data.image_base64){
+                        // Normal image download
+                        downloadLink.href = 'data:image/png;base64,' + data.image_base64;
+                        downloadLink.download = 'processed_image.png';
+                        downloadTitle.textContent = 'Processed image ready:';
+                        downloadSection.style.display = 'block';
+                    }
+                    
+                    if(data.hidden_text){
+                        outDiv.textContent += '\n\n📝 Hidden Text Extracted:\n' + data.hidden_text;
                     }
                 } else {
                     outDiv.textContent = 'Error: ' + (data.error || 'Unknown error');
