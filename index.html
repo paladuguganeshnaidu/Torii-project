@@ -12,7 +12,7 @@
     body{margin:0;font-family:system-ui,Arial,sans-serif;background:var(--bg);color:var(--fg)}
     a{color:inherit;text-decoration:none}
     .page{max-width:980px;margin:0 auto;padding:28px}
-    .top{text-align:center;margin:20px 0 8px}
+    .top{text-align:center;margin:20px 0 8px;position:relative}
     .top h1{font-size:40px;margin:0}
     .subtitle{color:var(--muted)}
     .search{display:flex;justify-content:center;margin:18px 0 28px}
@@ -23,6 +23,19 @@
     .label{font-weight:600}
     .foot{display:flex;gap:8px;justify-content:center;margin:26px 0;color:var(--muted)}
     .plain{color:var(--muted)}
+    
+    /* Profile dropdown styles */
+    .profile-container{position:absolute;top:10px;right:10px;display:none}
+    .profile-container.show{display:block}
+    .profile-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:all 0.2s}
+    .profile-btn:hover{background:#f0f0f0;border-color:#999}
+    .profile-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;display:grid;place-items:center;font-weight:600;font-size:14px}
+    .profile-email{font-size:14px;color:var(--fg)}
+    .profile-dropdown{position:absolute;top:50px;right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.1);min-width:200px;display:none;z-index:100}
+    .profile-dropdown.show{display:block}
+    .profile-dropdown a{display:block;padding:10px 16px;color:var(--fg);text-decoration:none;transition:background 0.2s}
+    .profile-dropdown a:hover{background:var(--bg)}
+    .profile-dropdown hr{margin:4px 0;border:none;border-top:1px solid var(--border)}
   </style>
   <meta name="color-scheme" content="light dark" />
   <link rel="icon" href="data:," />
@@ -33,9 +46,23 @@
 <body class="home">
   <div class="page">
     <header class="top">
+      <!-- Profile indicator (shows when logged in) -->
+      <div id="profileContainer" class="profile-container">
+        <div class="profile-btn" onclick="toggleProfileDropdown()">
+          <div class="profile-avatar" id="profileAvatar">U</div>
+          <span class="profile-email" id="profileEmail">user@email.com</span>
+        </div>
+        <div id="profileDropdown" class="profile-dropdown">
+          <a href="#" onclick="alert('Profile page coming soon!'); return false;">👤 My Profile</a>
+          <a href="#" onclick="alert('Settings coming soon!'); return false;">⚙️ Settings</a>
+          <hr>
+          <a href="/auth/logout">🚪 Logout</a>
+        </div>
+      </div>
+      
       <h1>Torii</h1>
       <p class="subtitle">Security tools at your fingertips</p>
-      <p>
+      <p id="authLinks">
         <a class="plain" href="/auth/login">Login</a>
         <span aria-hidden="true">·</span>
         <a class="plain" href="/auth/register">Register</a>
@@ -100,6 +127,50 @@
       };
       input.addEventListener('input', filter);
     })();
+    
+    // Check user session and display profile
+    async function checkUserSession() {
+      try {
+        const response = await fetch('/api/user-session');
+        const data = await response.json();
+        
+        if (data.logged_in) {
+          // Show profile indicator
+          const profileContainer = document.getElementById('profileContainer');
+          const profileEmail = document.getElementById('profileEmail');
+          const profileAvatar = document.getElementById('profileAvatar');
+          const authLinks = document.getElementById('authLinks');
+          
+          // Get first letter of email for avatar
+          const firstLetter = (data.email || 'U')[0].toUpperCase();
+          
+          profileEmail.textContent = data.email;
+          profileAvatar.textContent = firstLetter;
+          profileContainer.classList.add('show');
+          authLinks.style.display = 'none';
+        }
+      } catch (error) {
+        console.log('Not logged in or session check failed');
+      }
+    }
+    
+    // Toggle profile dropdown
+    function toggleProfileDropdown() {
+      const dropdown = document.getElementById('profileDropdown');
+      dropdown.classList.toggle('show');
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+      const profileBtn = document.querySelector('.profile-btn');
+      const dropdown = document.getElementById('profileDropdown');
+      if (profileBtn && dropdown && !profileBtn.contains(event.target) && !dropdown.contains(event.target)) {
+        dropdown.classList.remove('show');
+      }
+    });
+    
+    // Check session on page load
+    checkUserSession();
   </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, render_template, request, send_from_directory, redirect, url_for
+from flask import Flask, jsonify, render_template, request, send_from_directory, redirect, url_for, session
 
 from .config import Config, PROJECT_ROOT
 from .database import get_db, close_db, init_db
@@ -76,6 +76,18 @@ def create_app():
             return send_from_directory(PROJECT_ROOT, filename)
         # Redirect to modern tile-based homepage for any unknown routes
         return redirect('/')
+
+    # User session API
+    @app.get('/api/user-session')
+    def api_user_session():
+        """Return current user session info for profile display."""
+        if 'user' in session or 'user_id' in session:
+            return jsonify({
+                'logged_in': True,
+                'email': session.get('user', session.get('email', '')),
+                'user_id': session.get('user_id')
+            })
+        return jsonify({'logged_in': False})
 
     # API endpoints
     @app.post('/api/email-analyzer')
