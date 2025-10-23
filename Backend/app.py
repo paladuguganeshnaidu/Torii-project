@@ -41,16 +41,19 @@ def create_app():
     app.teardown_appcontext(close_db)
     app.teardown_appcontext(close_db_connection)
 
+    # Compute canonical frontend/static directories
+    FRONTEND_DIR = os.path.join(PROJECT_ROOT, 'frontend')
+
     # Serve the styled static homepage by default
     @app.route('/')
     def index():
-        # Serve the static index.html from the project root to match GitHub Pages styling
-        return send_from_directory(PROJECT_ROOT, 'index.html')
+        # Serve the static index.html from frontend folder
+        return send_from_directory(FRONTEND_DIR, 'index.html')
 
     # Also serve /index.html explicitly (links may reference it)
     @app.route('/index.html')
     def static_index_file():
-        return send_from_directory(PROJECT_ROOT, 'index.html')
+        return send_from_directory(FRONTEND_DIR, 'index.html')
 
     # Serve assets used by the static pages (e.g., assets/css/main.css)
     @app.route('/assets/<path:filename>')
@@ -74,8 +77,16 @@ def create_app():
 
     @app.route('/<path:filename>')
     def serve_static_pages(filename):
+        from werkzeug.exceptions import NotFound
         if filename in _ALLOWED_STATIC_PAGES:
-            return send_from_directory(PROJECT_ROOT, filename)
+            # Prefer files under frontend/, but fall back to project root for legacy pages
+            try:
+                return send_from_directory(FRONTEND_DIR, filename)
+            except NotFound:
+                try:
+                    return send_from_directory(PROJECT_ROOT, filename)
+                except NotFound:
+                    return redirect('/')
         # Redirect to modern tile-based homepage for any unknown routes
         return redirect('/')
 
