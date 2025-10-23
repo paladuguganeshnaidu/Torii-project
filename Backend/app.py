@@ -80,6 +80,7 @@ def create_app():
         'tool8-stegoshield-extractor.html',
         'directory.html',
         'profile.html',
+        'settings.html',
     }
 
     @app.route('/<path:filename>')

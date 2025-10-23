@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Settings · Torii</title>
+  <link rel="preload" as="style" href="assets/css/main.css?v=2" />
+  <link rel="stylesheet" href="assets/css/main.css?v=2" />
+  <style>
+    :root{--bg:#f6f7fb;--fg:#0b1324;--muted:#6b7280;--card:#fff;--border:#e5e7eb}
+    body{margin:0;font-family:system-ui,Arial,sans-serif;background:var(--bg);color:var(--fg)}
+    a{color:inherit;text-decoration:none}
+    .page{max-width:880px;margin:0 auto;padding:28px}
+    .top{position:relative;margin:6px 0 18px;text-align:center}
+    .login-btn{position:absolute;top:10px;right:10px;padding:8px 16px;background:#667eea;color:#fff;border-radius:20px;font-size:14px;font-weight:500;display:none}
+    .login-btn.show{display:inline-block}
+    .profile-container{position:absolute;top:10px;right:10px;display:none}
+    .profile-container.show{display:block}
+    .profile-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:20px;cursor:pointer}
+    .profile-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;display:grid;place-items:center;font-weight:600;font-size:14px}
+    .profile-email{font-size:14px;color:var(--fg)}
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin:12px 0}
+    .card h2{margin:0 0 10px}
+    .field{display:flex;gap:10px;align-items:center}
+    .field input{flex:1;padding:10px;border:1px solid var(--border);border-radius:8px}
+    .btn{padding:10px 14px;border-radius:8px;background:#10b981;color:white;border:none;cursor:pointer}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .row .card{flex:1;min-width:260px}
+    .msg{margin-top:8px;font-size:14px}
+  </style>
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href="data:," />
+</head>
+<body>
+  <div class="page">
+    <header class="top">
+      <a href="/auth/login" id="loginBtn" class="login-btn">Login</a>
+      <div id="profileContainer" class="profile-container">
+        <a class="profile-btn" href="/index.html">
+          <div class="profile-avatar" id="profileAvatar">U</div>
+          <span class="profile-email" id="profileEmail">Account</span>
+        </a>
+      </div>
+      <h1 style="margin:0">Settings</h1>
+      <p class="muted" id="subtitle">Manage your account and entitlements</p>
+    </header>
+
+    <div class="row">
+      <section class="card" aria-labelledby="account">
+        <h2 id="account">Account</h2>
+        <p class="muted" id="accountEmail">Email: &mdash;</p>
+        <p class="muted" id="entitlements">Plan: Free</p>
+      </section>
+
+      <section class="card" aria-labelledby="coupon">
+        <h2 id="coupon">Redeem coupon</h2>
+        <form id="couponForm" class="field" onsubmit="return redeemCoupon(event)">
+          <input id="couponCode" type="text" placeholder="Enter coupon code" />
+          <button class="btn" type="submit">Redeem</button>
+        </form>
+        <div id="couponMsg" class="msg"></div>
+      </section>
+    </div>
+
+    <p><a href="/index.html">← Back to tools</a></p>
+  </div>
+
+  <script>
+    async function load()
+    {
+      try{
+        const res = await fetch('/api/user-session');
+        const data = await res.json();
+        const loginBtn = document.getElementById('loginBtn');
+        const pc = document.getElementById('profileContainer');
+        const emailEl = document.getElementById('accountEmail');
+        const planEl = document.getElementById('entitlements');
+        const avatar = document.getElementById('profileAvatar');
+
+        if (!data.logged_in){
+          loginBtn.classList.add('show');
+          pc.classList.remove('show');
+          // Redirect to login keeping return path
+          const next = encodeURIComponent('/settings.html');
+          window.location.href = `/auth/login?next=${next}`;
+          return;
+        }
+        loginBtn.classList.remove('show');
+        pc.classList.add('show');
+        avatar.textContent = (data.email||'U')[0].toUpperCase();
+        document.getElementById('profileEmail').textContent = data.email||'Account';
+
+        emailEl.innerHTML = `Email: <strong>${data.email||''}</strong>`;
+        const isPrem = !!data.is_premium;
+        let allowed = [];
+        try{
+          if (typeof data.allowed_tools === 'string' && data.allowed_tools.trim().startsWith('[')){
+            allowed = JSON.parse(data.allowed_tools);
+          } else if (typeof data.allowed_tools === 'string'){
+            allowed = data.allowed_tools.split(',').map(s=>s.trim()).filter(Boolean);
+          } else if (Array.isArray(data.allowed_tools)){
+            allowed = data.allowed_tools;
+          }
+        }catch(e){ allowed = []; }
+        const plan = isPrem ? 'Premium' : 'Free';
+        const extras = allowed.length ? ` · Unlocked: ${allowed.join(', ')}` : '';
+        planEl.textContent = `Plan: ${plan}${extras}`;
+      }catch(err){
+        console.error('Session load failed', err);
+      }
+    }
+
+    async function redeemCoupon(ev){
+      ev.preventDefault();
+      const code = (document.getElementById('couponCode').value||'').trim();
+      const msg = document.getElementById('couponMsg');
+      msg.textContent = '';
+      if (!code){
+        msg.textContent = 'Enter a coupon code.';
+        msg.style.color = '#b45309';
+        return false;
+      }
+      try{
+        const res = await fetch('/api/redeem-coupon', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({code})});
+        const data = await res.json();
+        if (data.ok){
+          msg.textContent = 'Coupon applied!';
+          msg.style.color = '#065f46';
+          load();
+        } else {
+          msg.textContent = data.error || 'Invalid coupon';
+          msg.style.color = '#991b1b';
+        }
+      }catch(e){
+        msg.textContent = 'Network error';
+        msg.style.color = '#991b1b';
+      }
+      return false;
+    }
+
+    load();
+  </script>
+</body>
+</html>
