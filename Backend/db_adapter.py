@@ -429,6 +429,10 @@ def get_user_by_id(user_id):
             if row:
                 return dict(row)
             return None
+    except Exception:
+        return None
+
+
 def update_user_entitlements(user_id, is_premium=None, allowed_tools=None):
     """
     Update a user's entitlements. Pass is_premium (bool) and/or allowed_tools (list or comma/JSON string).
@@ -476,9 +480,6 @@ def update_user_entitlements(user_id, is_premium=None, allowed_tools=None):
         return True
     except Exception:
         return False
-
-    except Exception:
-        return None
 
 
 def update_user_password(user_id, new_password_hash):
