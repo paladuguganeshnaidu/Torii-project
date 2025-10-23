@@ -4,7 +4,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from .config import Config, PROJECT_ROOT
 from .database import get_db, close_db, init_db
-from .db_adapter import init_database, close_db_connection, get_user_by_id, get_user_by_email, update_user_password
+from .db_adapter import init_database, close_db_connection, get_user_by_id, get_user_by_email, update_user_password, update_user_entitlements
 from .auth import bp as auth_bp
 from .admin import admin_bp
 from .tools.email_analyzer import analyze_email_tool
@@ -43,6 +43,13 @@ def create_app():
 
     # Compute canonical frontend/static directories
     FRONTEND_DIR = os.path.join(PROJECT_ROOT, 'frontend')
+    # Premium/restricted pages (filenames) - can be overridden via env var PREMIUM_PAGES
+    _DEFAULT_PREMIUM_PAGES = {
+        'tool7-stegoshield-inspector.html',
+        'tool8-stegoshield-extractor.html',
+    }
+    _env_premium_pages = os.getenv('PREMIUM_PAGES', '')
+    PREMIUM_PAGES = set([p.strip() for p in _env_premium_pages.split(',') if p.strip()]) or _DEFAULT_PREMIUM_PAGES
 
     # Serve the styled static homepage by default
     @app.route('/')
@@ -79,6 +86,15 @@ def create_app():
     def serve_static_pages(filename):
         from werkzeug.exceptions import NotFound
         if filename in _ALLOWED_STATIC_PAGES:
+            # Enforce premium access for restricted pages
+            if filename in PREMIUM_PAGES:
+                # Require login
+                user_id = session.get('user_id')
+                if not user_id:
+                    return redirect(url_for('auth.login'))
+                user = get_user_by_id(user_id)
+                if not _user_can_access(user, filename):
+                    return redirect('/')
             # Prefer files under frontend/, but fall back to project root for legacy pages
             try:
                 return send_from_directory(FRONTEND_DIR, filename)
@@ -95,11 +111,22 @@ def create_app():
     def api_user_session():
         """Return current user session info for profile display."""
         if 'user' in session or 'user_id' in session:
-            return jsonify({
+            user = None
+            try:
+                uid = session.get('user_id')
+                if uid:
+                    user = get_user_by_id(uid)
+            except Exception:
+                user = None
+            info = {
                 'logged_in': True,
                 'email': session.get('user', session.get('email', '')),
-                'user_id': session.get('user_id')
-            })
+                'user_id': session.get('user_id'),
+            }
+            if user:
+                info['is_premium'] = bool(user.get('is_premium') or False)
+                info['allowed_tools'] = user.get('allowed_tools')
+            return jsonify(info)
         return jsonify({'logged_in': False})
 
     # Profile API
@@ -248,5 +275,53 @@ def create_app():
             return json.dumps(obj, ensure_ascii=False)
         except Exception:
             return str(obj)
+
+    def _user_can_access(user: dict, filename: str) -> bool:
+        """Evaluate if the user can access a restricted page."""
+        if not user:
+            return False
+        # Premium flag grants all premium pages
+        if user.get('is_premium'):
+            return True
+        # Otherwise check explicit allowed_tools list (stored as JSON or CSV)
+        raw = user.get('allowed_tools') or ''
+        try:
+            import json
+            tools = json.loads(raw) if raw and raw.strip().startswith('[') else [t.strip() for t in raw.split(',') if t.strip()]
+        except Exception:
+            tools = [t.strip() for t in str(raw).split(',') if t.strip()]
+        return filename in set(tools)
+
+    @app.post('/api/redeem-coupon')
+    def api_redeem_coupon():
+        """Redeem a single coupon code to unlock tools or premium access for the current user."""
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({'ok': False, 'error': 'Not logged in'}), 401
+
+        data = request.get_json(silent=True) or {}
+        code = (data.get('code') or '').strip()
+        if not code:
+            return jsonify({'ok': False, 'error': 'Coupon code required'}), 400
+
+        configured = os.getenv('COUPON_CODE', '')
+        if not configured:
+            return jsonify({'ok': False, 'error': 'Coupon not configured'}), 500
+
+        if code != configured:
+            return jsonify({'ok': False, 'error': 'Invalid coupon code'}), 400
+
+        # Apply entitlements from env
+        grant_premium = os.getenv('COUPON_GRANT_PREMIUM', 'false').lower() in ('1', 'true', 'yes')
+        tools_env = os.getenv('PREMIUM_ALLOWED_TOOLS', '')
+        tools = [t.strip() for t in tools_env.split(',') if t.strip()]
+
+        success = update_user_entitlements(user_id, is_premium=grant_premium if grant_premium else None,
+                                           allowed_tools=tools if tools else None)
+        if not success:
+            return jsonify({'ok': False, 'error': 'Failed to apply entitlements'}), 500
+
+        user = get_user_by_id(user_id)
+        return jsonify({'ok': True, 'message': 'Coupon applied', 'is_premium': bool(user.get('is_premium')), 'allowed_tools': user.get('allowed_tools')})
 
     return app

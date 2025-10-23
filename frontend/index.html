@@ -78,6 +78,14 @@
     <section class="search">
       <input id="toolSearch" type="search" placeholder="Search tools… (email, url, hash, sms, malware, recon)" autocomplete="off" autofocus />
     </section>
+    
+    <section id="couponSection" style="display:none; text-align:center; margin:-8px 0 18px;">
+      <form id="couponForm" onsubmit="return redeemCoupon(event)" style="display:inline-flex; gap:8px; align-items:center;">
+        <input id="couponCode" type="text" placeholder="Enter coupon code" style="padding:8px 10px; border:1px solid var(--border); border-radius:8px;" />
+        <button class="btn" type="submit" style="padding:8px 14px; border-radius:8px; background:#10b981; color:white; border:none; cursor:pointer;">Redeem</button>
+      </form>
+      <div id="couponMsg" style="margin-top:8px; font-size:14px;"></div>
+    </section>
 
     <section class="grid">
   <a class="tile" href="tool1-email-analyzer.html" data-tags="email message phishing">
@@ -104,11 +112,11 @@
         <span class="icon" aria-hidden="true">🌐</span>
         <span class="label">Web Recon</span>
       </a>
-  <a class="tile" href="tool7-stegoshield-inspector.html" data-tags="stego image steganography hidden data inspector">
+  <a class="tile" href="tool7-stegoshield-inspector.html" data-tags="stego image steganography hidden data inspector" data-premium="true">
         <span class="icon" aria-hidden="true">🛡️</span>
         <span class="label">StegoShield Inspector</span>
       </a>
-  <a class="tile" href="tool8-stegoshield-extractor.html" data-tags="stego extractor analysis threat detection malware">
+  <a class="tile" href="tool8-stegoshield-extractor.html" data-tags="stego extractor analysis threat detection malware" data-premium="true">
         <span class="icon" aria-hidden="true">🔍</span>
         <span class="label">StegoShield Extractor</span>
       </a>
@@ -155,17 +163,27 @@
           profileContainer.classList.add('show');
           authLinks.style.display = 'none';
           loginBtn.classList.remove('show');
+
+          // Show coupon section for logged-in users
+          document.getElementById('couponSection').style.display = 'block';
+
+          // Apply premium visibility
+          applyPremiumVisibility(data);
         } else {
           // User is logged out - show login button
           loginBtn.classList.add('show');
           profileContainer.classList.remove('show');
           authLinks.style.display = 'block';
+          document.getElementById('couponSection').style.display = 'none';
+          applyPremiumVisibility({logged_in:false});
         }
       } catch (error) {
         console.log('Session check failed:', error);
         // Default to logged out state
         document.getElementById('loginBtn').classList.add('show');
         document.getElementById('authLinks').style.display = 'block';
+        document.getElementById('couponSection').style.display = 'none';
+        applyPremiumVisibility({logged_in:false});
       }
     }
     
@@ -186,6 +204,60 @@
     
     // Check session on page load
     checkUserSession();
+
+    function applyPremiumVisibility(session){
+      const premiumTiles = Array.from(document.querySelectorAll('.tile[data-premium="true"]'));
+      if (!session || !session.logged_in){
+        premiumTiles.forEach(t => t.style.display = 'none');
+        return;
+      }
+      const isPremium = !!session.is_premium;
+      let allowed = [];
+      try {
+        if (typeof session.allowed_tools === 'string' && session.allowed_tools.trim().startsWith('[')){
+          allowed = JSON.parse(session.allowed_tools);
+        } else if (typeof session.allowed_tools === 'string'){
+          allowed = session.allowed_tools.split(',').map(s => s.trim()).filter(Boolean);
+        } else if (Array.isArray(session.allowed_tools)){
+          allowed = session.allowed_tools;
+        }
+      } catch(e){ allowed = []; }
+      const allowedSet = new Set(allowed);
+      premiumTiles.forEach(t => {
+        const href = (t.getAttribute('href')||'').trim();
+        const can = isPremium || allowedSet.has(href) || allowedSet.has(href.replace(/^\/?/,''));
+        t.style.display = can ? '' : 'none';
+      });
+    }
+
+    async function redeemCoupon(ev){
+      ev.preventDefault();
+      const code = (document.getElementById('couponCode').value||'').trim();
+      const msg = document.getElementById('couponMsg');
+      msg.textContent = '';
+      if (!code){
+        msg.textContent = 'Enter a coupon code.';
+        msg.style.color = '#b45309';
+        return false;
+      }
+      try{
+        const res = await fetch('/api/redeem-coupon', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({code})});
+        const data = await res.json();
+        if (data.ok){
+          msg.textContent = 'Coupon applied!';
+          msg.style.color = '#065f46';
+          // Refresh session state
+          checkUserSession();
+        } else {
+          msg.textContent = data.error || 'Invalid coupon';
+          msg.style.color = '#991b1b';
+        }
+      } catch(err){
+        msg.textContent = 'Network error';
+        msg.style.color = '#991b1b';
+      }
+      return false;
+    }
   </script>
 </body>
 </html>

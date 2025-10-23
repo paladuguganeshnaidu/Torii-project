@@ -171,6 +171,15 @@ def _init_postgres_tables(app):
                 cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_ci ON users (LOWER(email))")
             except Exception:
                 pass
+            # Add entitlement columns if missing
+            try:
+                cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT FALSE")
+            except Exception:
+                pass
+            try:
+                cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS allowed_tools TEXT")
+            except Exception:
+                pass
             
             # Tool logs table
             cur.execute("""
@@ -226,6 +235,15 @@ def _init_mysql_tables(app):
                 cur.execute("CREATE UNIQUE INDEX idx_email_ci ON users (email_ci)")
             except Exception:
                 pass
+            # Add entitlement columns if missing
+            try:
+                cur.execute("ALTER TABLE users ADD COLUMN is_premium TINYINT(1) DEFAULT 0")
+            except Exception:
+                pass
+            try:
+                cur.execute("ALTER TABLE users ADD COLUMN allowed_tools TEXT")
+            except Exception:
+                pass
         conn.commit()
         conn.close()
         app.logger.info('✅ MySQL database initialized')
@@ -250,6 +268,15 @@ def _init_sqlite_tables(app):
         # Case-insensitive unique email index using expression index
         try:
             conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_ci ON users(lower(email))")
+        except Exception:
+            pass
+        # Add entitlement columns if missing
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN is_premium INTEGER DEFAULT 0")
+        except Exception:
+            pass
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN allowed_tools TEXT")
         except Exception:
             pass
         conn.commit()
@@ -309,7 +336,7 @@ def get_user_by_email(email):
         if db_type == 'postgres':
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE LOWER(email) = %s",
+                    "SELECT id, email, password_hash, mobile, registered_at, COALESCE(is_premium, FALSE) AS is_premium, allowed_tools FROM users WHERE LOWER(email) = %s",
                     (email.lower(),)
                 )
                 row = cur.fetchone()
@@ -321,11 +348,13 @@ def get_user_by_email(email):
                     'password_hash': row[2],
                     'mobile': row[3],
                     'registered_at': str(row[4]) if len(row) > 4 else None,
+                    'is_premium': bool(row[5]) if len(row) > 5 else False,
+                    'allowed_tools': row[6] if len(row) > 6 else None,
                 }
         elif db_type == 'mysql':
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE LOWER(email) = %s",
+                    "SELECT id, email, password_hash, mobile, registered_at, IFNULL(is_premium, 0) AS is_premium, allowed_tools FROM users WHERE LOWER(email) = %s",
                     (email.lower(),)
                 )
                 row = cur.fetchone()
@@ -339,10 +368,12 @@ def get_user_by_email(email):
                     'password_hash': row[2],
                     'mobile': row[3],
                     'registered_at': str(row[4]) if len(row) > 4 else None,
+                    'is_premium': bool(row[5]) if len(row) > 5 else False,
+                    'allowed_tools': row[6] if len(row) > 6 else None,
                 }
         else:  # sqlite
             cursor = conn.execute(
-                "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE LOWER(email) = ?",
+                "SELECT id, email, password_hash, mobile, registered_at, IFNULL(is_premium, 0) AS is_premium, allowed_tools FROM users WHERE LOWER(email) = ?",
                 (email.lower(),)
             )
             row = cursor.fetchone()
@@ -364,7 +395,7 @@ def get_user_by_id(user_id):
     try:
         if db_type == 'postgres':
             with conn.cursor() as cur:
-                cur.execute("SELECT id, email, mobile, registered_at FROM users WHERE id = %s", (user_id,))
+                cur.execute("SELECT id, email, mobile, registered_at, COALESCE(is_premium, FALSE) AS is_premium, allowed_tools FROM users WHERE id = %s", (user_id,))
                 row = cur.fetchone()
                 if not row:
                     return None
@@ -372,11 +403,13 @@ def get_user_by_id(user_id):
                     'id': row[0],
                     'email': row[1],
                     'mobile': row[2],
-                    'registered_at': str(row[3])
+                    'registered_at': str(row[3]),
+                    'is_premium': bool(row[4]) if len(row) > 4 else False,
+                    'allowed_tools': row[5] if len(row) > 5 else None,
                 }
         elif db_type == 'mysql':
             with conn.cursor() as cur:
-                cur.execute("SELECT id, email, mobile, registered_at FROM users WHERE id = %s", (user_id,))
+                cur.execute("SELECT id, email, mobile, registered_at, IFNULL(is_premium, 0) AS is_premium, allowed_tools FROM users WHERE id = %s", (user_id,))
                 row = cur.fetchone()
                 if not row:
                     return None
@@ -386,14 +419,64 @@ def get_user_by_id(user_id):
                     'id': row[0],
                     'email': row[1],
                     'mobile': row[2],
-                    'registered_at': str(row[3])
+                    'registered_at': str(row[3]),
+                    'is_premium': bool(row[4]) if len(row) > 4 else False,
+                    'allowed_tools': row[5] if len(row) > 5 else None,
                 }
         else:  # sqlite
-            cursor = conn.execute("SELECT id, email, mobile, registered_at FROM users WHERE id = ?", (user_id,))
+            cursor = conn.execute("SELECT id, email, mobile, registered_at, IFNULL(is_premium, 0) AS is_premium, allowed_tools FROM users WHERE id = ?", (user_id,))
             row = cursor.fetchone()
             if row:
                 return dict(row)
             return None
+def update_user_entitlements(user_id, is_premium=None, allowed_tools=None):
+    """
+    Update a user's entitlements. Pass is_premium (bool) and/or allowed_tools (list or comma/JSON string).
+    Returns True on success.
+    """
+    conn = get_db_connection()
+    db_type = g.get('db_type', 'sqlite')
+
+    # Normalize allowed_tools to string (JSON)
+    import json
+    tools_str = None
+    if allowed_tools is not None:
+        if isinstance(allowed_tools, str):
+            tools_str = allowed_tools
+        else:
+            tools_str = json.dumps(allowed_tools)
+
+    try:
+        if db_type in ('postgres', 'mysql'):
+            with conn.cursor() as cur:
+                if is_premium is not None and tools_str is not None:
+                    cur.execute(
+                        "UPDATE users SET is_premium = %s, allowed_tools = %s WHERE id = %s",
+                        (bool(is_premium), tools_str, user_id)
+                    )
+                elif is_premium is not None:
+                    cur.execute(
+                        "UPDATE users SET is_premium = %s WHERE id = %s",
+                        (bool(is_premium), user_id)
+                    )
+                elif tools_str is not None:
+                    cur.execute(
+                        "UPDATE users SET allowed_tools = %s WHERE id = %s",
+                        (tools_str, user_id)
+                    )
+            conn.commit()
+        else:
+            if is_premium is not None and tools_str is not None:
+                conn.execute("UPDATE users SET is_premium = ?, allowed_tools = ? WHERE id = ?", (1 if is_premium else 0, tools_str, user_id))
+            elif is_premium is not None:
+                conn.execute("UPDATE users SET is_premium = ? WHERE id = ?", (1 if is_premium else 0, user_id))
+            elif tools_str is not None:
+                conn.execute("UPDATE users SET allowed_tools = ? WHERE id = ?", (tools_str, user_id))
+            conn.commit()
+        return True
+    except Exception:
+        return False
+
     except Exception:
         return None
 

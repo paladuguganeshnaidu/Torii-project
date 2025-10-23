@@ -68,6 +68,17 @@ API endpoints (POST):
 - The tools are stub implementations returning placeholder analysis. Replace with real logic as needed.
 - The SQLite database file will be created on first run under `database/app.db`.
 
+### Optional: Premium tools via coupon code
+
+You can restrict selected tools to specific users and unlock access with a one-time coupon code.
+
+- `COUPON_CODE` – The single coupon string users must enter (required to enable coupons)
+- `PREMIUM_PAGES` – Comma-separated list of restricted page filenames (default: `tool7-stegoshield-inspector.html,tool8-stegoshield-extractor.html`)
+- `COUPON_GRANT_PREMIUM` – If `true`, coupon grants access to all premium pages
+- `PREMIUM_ALLOWED_TOOLS` – Comma-separated filenames to grant when the coupon is redeemed (used when `COUPON_GRANT_PREMIUM` is false)
+
+After logging in, users can redeem the coupon from the homepage. Backend also enforces access control when premium pages are requested directly.
+
 ## Development
 - Edit templates in `Backend/templates/`
 - Add/extend tools in `Backend/tools/`

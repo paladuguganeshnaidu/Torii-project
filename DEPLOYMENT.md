@@ -148,6 +148,21 @@ Your app will **automatically redeploy** and connect to PostgreSQL!
    - ✅ **Should show "POSTGRES"** (you're safe!)
    - ❌ **If shows "SQLITE"** → DATABASE_URL not set correctly, go back to Step 3
 
+   ---
+
+   ## Premium Tools & Coupon Setup (Optional)
+
+   You can restrict some tools to selected users and unlock them via a coupon code.
+
+   Set these environment variables in Render → Your Service → Environment:
+
+   - `COUPON_CODE` – The coupon users must input (e.g., `TORII2025`)
+   - `PREMIUM_PAGES` – Comma-separated filenames to restrict (e.g., `tool7-stegoshield-inspector.html,tool8-stegoshield-extractor.html`)
+   - `COUPON_GRANT_PREMIUM` – Set to `true` to grant access to all premium pages on redeem
+   - `PREMIUM_ALLOWED_TOOLS` – If not granting full premium, list exact filenames to unlock upon redeem
+
+   Users must be logged in to redeem. Access is enforced server-side when requesting premium pages.
+
 #### Step 6: Monitor Your Database
 
 The admin dashboard shows:
