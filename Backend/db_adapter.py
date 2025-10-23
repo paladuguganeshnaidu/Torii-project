@@ -166,6 +166,11 @@ def _init_postgres_tables(app):
                     registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            # Case-insensitive unique constraint on email
+            try:
+                cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_ci ON users (LOWER(email))")
+            except Exception:
+                pass
             
             # Tool logs table
             cur.execute("""
@@ -177,6 +182,10 @@ def _init_postgres_tables(app):
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
+            try:
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_tool_logs_created_at ON tool_logs(created_at)")
+            except Exception:
+                pass
             
             conn.commit()
             app.logger.info('PostgreSQL tables initialized successfully')
@@ -207,6 +216,16 @@ def _init_mysql_tables(app):
                     INDEX idx_email (email)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
             """)
+            # Add generated column for case-insensitive unique constraint
+            try:
+                cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email_ci VARCHAR(255) GENERATED ALWAYS AS (LOWER(email)) STORED")
+            except Exception:
+                pass
+            # Create unique index on generated column
+            try:
+                cur.execute("CREATE UNIQUE INDEX idx_email_ci ON users (email_ci)")
+            except Exception:
+                pass
         conn.commit()
         conn.close()
         app.logger.info('✅ MySQL database initialized')
@@ -228,6 +247,11 @@ def _init_sqlite_tables(app):
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_email ON users(email)")
+        # Case-insensitive unique email index using expression index
+        try:
+            conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_ci ON users(lower(email))")
+        except Exception:
+            pass
         conn.commit()
         conn.close()
         app.logger.info('✅ SQLite database initialized')
@@ -285,8 +309,8 @@ def get_user_by_email(email):
         if db_type == 'postgres':
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE email = %s",
-                    (email,)
+                    "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE LOWER(email) = %s",
+                    (email.lower(),)
                 )
                 row = cur.fetchone()
                 if not row:
@@ -301,8 +325,8 @@ def get_user_by_email(email):
         elif db_type == 'mysql':
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE email = %s",
-                    (email,)
+                    "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE LOWER(email) = %s",
+                    (email.lower(),)
                 )
                 row = cur.fetchone()
                 if not row:
@@ -318,8 +342,8 @@ def get_user_by_email(email):
                 }
         else:  # sqlite
             cursor = conn.execute(
-                "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE email = ?",
-                (email,)
+                "SELECT id, email, password_hash, mobile, registered_at FROM users WHERE LOWER(email) = ?",
+                (email.lower(),)
             )
             row = cursor.fetchone()
             if row:
