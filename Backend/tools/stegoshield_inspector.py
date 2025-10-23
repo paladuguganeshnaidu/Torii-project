@@ -4,7 +4,7 @@ StegoShield Inspector Tool
 Analyzes uploaded images for hidden text, virus signatures, malware, or suspicious data.
 Features:
 - Text embedding via LSB steganography (encode/decode)
-- Prank mode: generates HTML that shows fake error popup
+- Prank qmode: generates HTML that shows fake error popup
 - Manipulate mode: adds warning overlays
 - Real virus detection placeholder
 - Multiple output formats: PNG, JPG, HTML, PDF

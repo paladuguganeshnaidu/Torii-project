@@ -9,8 +9,9 @@ A minimal full-stack starter for a security tools hub. It includes:
 ## Structure
 
 - Backend: Flask app, tools, templates, requirements
-- frontend: static HTML/CSS demo pages
-- database: schema and SQLite DB created on first run
+- frontend: static HTML pages for the tool UIs (served directly by Flask). All public .html files now live here.
+- assets: shared CSS and images for the static pages
+- database: schema and SQLite DB created on first run (or PostgreSQL when configured)
 
 ## Quick start (Windows / PowerShell)
 
@@ -56,6 +57,7 @@ API endpoints (POST):
 - /api/web-recon
 
 ## Notes
+- Static pages are served from `frontend/` (e.g., `/tool1-email-analyzer.html` maps to `frontend/tool1-email-analyzer.html`).
 - Registration now stores users in MySQL with hashed passwords. Configure the following environment variables before running to enable MySQL:
 	- `MYSQL_HOST`
 	- `MYSQL_PORT` (optional, default 3306)
