@@ -92,7 +92,7 @@
         --glow-color-dark: hsl(320, 40%, 35%);
       }
 
-      body {
+  body {
         min-height: 100vh;
         display: grid;
         place-items: center;
@@ -106,9 +106,15 @@
         align-items: center;
         justify-content: center;
         gap: 8vmin;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         padding: 2rem;
       }
+
+      /* left column (lamp) */
+      .lamp-left{ position:relative; flex:0 0 42%; display:flex; align-items:center; justify-content:flex-end }
+      .lamp-right{ flex:1 1 58%; min-width:320px }
+      .lamp-cord-visual{ position:absolute; left:46%; top:80px; width:6px; height:260px; background:linear-gradient(180deg,#444,#222); border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.4); transform-origin:top; }
+      .pull-instruction{ position:absolute; left:50%; top:350px; transform:translateX(-50%); color:#cbd5e1; font-weight:600; background:transparent; border:none }
 
       .login-form {
         background: rgba(18, 25, 33, 0.9);
@@ -184,9 +190,10 @@
       <label for="off">Off</label>
     </form>
 
-  <div class="container" style="align-items:stretch;">
-    <!-- Full interactive lamp on the left -->
-    <div style="flex:0 0 48%;display:flex;align-items:center;justify-content:center;">
+    <div class="container" style="align-items:stretch;">
+      <!-- Full interactive lamp on the left -->
+      <div class="lamp-left">
+        <div class="lamp-cord-visual" aria-hidden="true"></div>
     <svg class="lamp" viewBox="0 0 333 484" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:420px;">
         <g class="lamp__shade shade">
           <ellipse class="shade__opening" cx="165" cy="220" rx="130" ry="20"/>
@@ -259,9 +266,10 @@
         </defs>
         <circle class="lamp__hit" cx="124" cy="347" r="66" fill="#C4C4C4" fill-opacity=".1"/>
       </svg>
-    </div>
+        <button class="pull-instruction" id="pullInstruction" aria-hidden="false">Pull lamp to sign in</button>
+      </div>
 
-    <div class="login-form" id="loginForm" style="flex:1 1 48%;min-width:320px;max-width:520px;">
+      <div class="login-form lamp-right" id="loginForm" style="max-width:520px;">
         <h2>Welcome back</h2>
 
         {% with messages = get_flashed_messages(with_categories=True) %}
@@ -355,15 +363,30 @@
           CORD_TL.add(to(CORDS[0],{ morphSVG: CORDS[i], duration: CORD_DURATION, repeat:1, yoyo:true }));
       }
 
-      Draggable.create(PROXY,{
-          trigger: HIT,
-          type: 'x,y',
-          onPress: (e)=>{ startX = e.x; startY = e.y; },
-          onDrag: function(){ set(DUMMY_CORD,{ attr:{ x2: this.x, y2: Math.max(400,this.y) } }); },
-          onRelease: function(e){ const DISTX = Math.abs(e.x - startX); const DISTY = Math.abs(e.y - startY); const TRAVELLED = Math.sqrt(DISTX*DISTX + DISTY*DISTY); to(DUMMY_CORD,{ attr: { x2: ENDX, y2: ENDY }, duration: CORD_DURATION, onComplete: ()=>{ if(TRAVELLED>50){ CORD_TL.restart(); } else { RESET(); } } }); }
-      });
+    Draggable.create(PROXY,{
+      trigger: HIT,
+      type: 'x,y',
+      onPress: (e)=>{ startX = e.x; startY = e.y; try{ document.getElementById('pullInstruction').textContent = 'Release to toggle'; }catch(e){} },
+      onDrag: function(){
+        // update dummy cord visually
+        set(DUMMY_CORD,{ attr:{ x2: this.x, y2: Math.max(400,this.y) } });
+        // tilt visual cord
+        try{ document.querySelector('.lamp-cord-visual').style.transform = `rotate(${Math.min(30,(this.x-124)/6)}deg)` }catch(e){}
+      },
+      onRelease: function(e){
+        const DISTX = Math.abs(e.x - startX); const DISTY = Math.abs(e.y - startY);
+        const TRAVELLED = Math.sqrt(DISTX*DISTX + DISTY*DISTY);
+        to(DUMMY_CORD,{ attr: { x2: ENDX, y2: ENDY }, duration: CORD_DURATION, onComplete: ()=>{ if(TRAVELLED>50){ CORD_TL.restart(); } else { RESET(); } } });
+        try{ document.getElementById('pullInstruction').textContent = 'Pull lamp to sign in'; document.querySelector('.lamp-cord-visual').style.transform='rotate(0deg)'; }catch(e){}
+      }
+    });
 
-      gsap.set('.lamp',{ display: 'block' });
+    // show the lamp and ensure instruction visible
+    try{
+    const instr = document.getElementById('pullInstruction');
+    instr.style.opacity = '1';
+    }catch(e){}
+    gsap.set('.lamp',{ display: 'block' });
     </script>
   </body>
 </html>
