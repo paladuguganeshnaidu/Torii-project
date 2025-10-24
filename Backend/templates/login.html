@@ -1,37 +1,239 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <title>Login</title>
-  <style>
-    body{font-family:Arial;padding:24px;max-width:420px;margin:auto}
-    input,button{width:100%;padding:10px;margin:6px 0}
-    a{color:#06c}
-    .flashes{margin:10px 0}
-    .flash{padding:10px 12px;border-radius:6px;margin:8px 0;font-size:14px}
-    .flash.error{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
-    .flash.success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
-    .flash.info{background:#e0f2fe;color:#075985;border:1px solid #bae6fd}
-  </style>
-</head>
-<body>
-  <h2>Login</h2>
-  
-  {% with messages = get_flashed_messages(with_categories=True) %}
-    {% if messages %}
-      <div class="flashes">
-        {% for category, message in messages %}
-          <div class="flash {{ category }}">{{ message }}</div>
-        {% endfor %}
-      </div>
-    {% endif %}
-  {% endwith %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login — Torii</title>
+    <style>
+      *,
+      *:after,
+      *:before {
+        box-sizing: border-box;
+      }
 
-  <form method="post">
-    <input name="email" placeholder="Email" type="email" required />
-    <input name="password" placeholder="Password" type="password" required />
-    <button type="submit">Login</button>
-  </form>
-  <p>Don't have an account? <a href="/auth/register">Register</a></p>
-</body>
+      :root {
+        --cord: hsl(210, 0%, calc((40 + (var(--on, 0) * 50)) * 1%));
+        --opening: hsl(
+          50,
+          calc((10 + (var(--on, 0) * 80)) * 1%),
+          calc((20 + (var(--on, 0) * 70)) * 1%)
+        );
+        --feature: #0a0a0a;
+        --accent: 210;
+        --tongue: #e06952;
+        --base-top: hsl(
+          var(--accent),
+          0%,
+          calc((40 + (var(--on, 0) * 40)) * 1%)
+        );
+        --base-side: hsl(
+          var(--accent),
+          0%,
+          calc((20 + (var(--on, 0) * 40)) * 1%)
+        );
+        --post: hsl(
+          var(--accent),
+          0%,
+          calc((20 + (var(--on, 0) * 40)) * 1%)
+        );
+        --b-1: hsla(
+          45,
+          calc((0 + (var(--on, 0) * 0)) * 1%),
+          calc((50 + (var(--on, 0) * 50)) * 1%),
+          0.85
+        );
+        --b-2: hsla(
+          45,
+          calc((0 + (var(--on, 0) * 0)) * 1%),
+          calc((20 + (var(--on, 0) * 30)) * 1%),
+          0.25
+        );
+        --b-3: hsla(
+          45,
+          calc((0 + (var(--on, 0) * 0)) * 1%),
+          calc((20 + (var(--on, 0) * 30)) * 1%),
+          0.5
+        );
+        --b-4: hsla(
+          45,
+          calc((0 + (var(--on, 0) * 0)) * 1%),
+          calc((20 + (var(--on, 0) * 30)) * 1%),
+          0.25
+        );
+        --l-1: hsla(
+          45,
+          calc((0 + (var(--on, 0) * 20)) * 1%),
+          calc((50 + (var(--on, 0) * 50)) * 1%),
+          0.85
+        );
+        --l-2: hsla(
+          45,
+          calc((0 + (var(--on, 0) * 20)) * 1%),
+          calc((50 + (var(--on, 0) * 50)) * 1%),
+          0.85
+        );
+        --shade-hue: 320;
+        --t-1: hsl(
+          var(--shade-hue),
+          calc((0 + (var(--on, 0) * 20)) * 1%),
+          calc((30 + (var(--on, 0) * 60)) * 1%)
+        );
+        --t-2: hsl(
+          var(--shade-hue),
+          calc((0 + (var(--on, 0) * 20)) * 1%),
+          calc((20 + (var(--on, 0) * 35)) * 1%)
+        );
+        --t-3: hsl(
+          var(--shade-hue),
+          calc((0 + (var(--on, 0) * 20)) * 1%),
+          calc((10 + (var(--on, 0) * 20)) * 1%)
+        );
+        --glow-color: hsl(320, 40%, 45%);
+        --glow-color-dark: hsl(320, 40%, 35%);
+      }
+
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #121921;
+        margin: 0;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+
+      .container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8vmin;
+        flex-wrap: wrap;
+        padding: 2rem;
+      }
+
+      .login-form {
+        background: rgba(18, 25, 33, 0.9);
+        padding: 3rem 2.5rem;
+        border-radius: 20px;
+        min-width: 320px;
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+        pointer-events: none;
+        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        border: 2px solid transparent;
+        box-shadow: 0 0 0px rgba(255, 255, 255, 0);
+      }
+
+      .login-form.active {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        pointer-events: all;
+        border-color: var(--glow-color);
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1),
+          0 0 30px var(--glow-color),
+          inset 0 0 15px rgba(255, 255, 255, 0.05);
+      }
+
+      .login-form h2 {
+        color: #fff;
+        font-size: 2rem;
+        margin: 0 0 2rem 0;
+        text-align: center;
+        text-shadow: 0 0 8px var(--glow-color);
+      }
+
+      .form-group { margin-bottom: 1rem }
+      .form-group label{ display:block;color:#aaa;margin-bottom:6px }
+      .form-group input{ width:100%;padding:0.75rem 1rem;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:#fff }
+
+      .login-btn {
+        width: 100%;
+        padding: 0.875rem;
+        background: linear-gradient(
+          135deg,
+          var(--glow-color),
+          var(--glow-color-dark)
+        );
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        margin-top: 0.5rem;
+      }
+
+      .login-btn:hover { transform: translateY(-2px) }
+
+      .form-footer { margin-top: 1rem; text-align:center }
+      .forgot-link{ color:#888 }
+
+      .flashes{ width:100%; max-width:420px; margin:8px auto 0 }
+      .flash{ padding:10px 12px;border-radius:8px;margin-bottom:8px }
+      .flash.error{ background:#fee2e2;color:#991b1b }
+      .flash.success{ background:#dcfce7;color:#166534 }
+      .flash.info{ background:#e0f2fe;color:#075985 }
+    </style>
+  </head>
+  <body>
+    <form class="radio-controls" aria-hidden="true">
+      <input type="radio" id="on" name="status" value="on" />
+      <label for="on">On</label>
+      <input type="radio" id="off" name="status" value="off" />
+      <label for="off">Off</label>
+    </form>
+
+    <div class="container">
+      <!-- Decorative lamp (kept lightweight) -->
+      <svg class="lamp" viewBox="0 0 333 484" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- simplified visual; original design preserved in assets if needed -->
+        <ellipse class="shade__opening" cx="165" cy="220" rx="130" ry="20" fill="var(--opening)" />
+        <g class="lamp__post"><rect x="150" y="140" width="30" height="280" fill="var(--post)"/></g>
+        <ellipse class="base__top" cx="165" cy="430" rx="80" ry="20" fill="var(--base-top)" />
+      </svg>
+
+      <div class="login-form" id="loginForm">
+        <h2>Welcome back</h2>
+
+        {% with messages = get_flashed_messages(with_categories=True) %}
+          {% if messages %}
+          <div class="flashes">
+            {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="post" action="">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" placeholder="you@example.com" required />
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="Your password" required />
+          </div>
+          <button type="submit" class="login-btn">Login</button>
+          <div class="form-footer">
+            <a class="forgot-link" href="/auth/register">Don't have an account? Register</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/gsap@3/dist/gsap.min.js"></script>
+    <script src="https://unpkg.com/gsap@3/dist/Draggable.min.js"></script>
+    <script>
+      // Lightweight behavior: animate the form in when lamp is toggled (or on load)
+      (function(){
+        try{
+          const login = document.getElementById('loginForm');
+          // show the form with a tiny delay for effect
+          setTimeout(()=> login.classList.add('active'), 220);
+        }catch(e){/* silent */}
+      })();
+    </script>
+  </body>
 </html>
