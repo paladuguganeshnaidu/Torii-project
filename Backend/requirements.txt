@@ -16,3 +16,5 @@ scapy>=2.4.5
 watchdog>=2.1.0
 py-cpuinfo>=8.0.0
 ipaddress>=1.0.23
+requests>=2.0
+beautifulsoup4>=4.14.2
