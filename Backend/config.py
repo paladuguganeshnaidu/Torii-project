@@ -19,3 +19,18 @@ class Config:
     DATABASE = DB_PATH
     TEMPLATES_AUTO_RELOAD = True
 
+
+# DoS detector configuration (tunable)
+DOS_CONFIG = {
+    "whitelist": [
+        "127.0.0.1",
+        "192.168.1.0/24",
+        "10.0.0.0/8"
+    ],
+    "thresholds": {
+        "pps_global": 10000,
+        "req_per_ip": 100
+    },
+    "z_score_window": 900  # 15 minutes
+}
+

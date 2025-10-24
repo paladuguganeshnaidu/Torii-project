@@ -12,3 +12,5 @@ whois
 pillow
 reportlab
 cryptography
+scapy
+watchdog

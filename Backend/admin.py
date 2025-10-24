@@ -3,8 +3,19 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from .db_adapter import get_db_connection
 from flask import g
 import os
+import time
+
+# DoS detection tools
+from .tools.dos_detector import DoSDetector
+from .tools.analyzer import Analyzer
+from .tools.mitigator import Mitigator
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+
+# Initialize detector (should be a singleton in production)
+detector = DoSDetector()
+analyzer = Analyzer()
+mitigator = Mitigator()
 
 """Admin authentication configuration.
 
@@ -220,3 +231,27 @@ def api_db_stats():
         return jsonify({'ok': False, 'error': str(e)}), 500
     finally:
         conn.close()
+
+
+@admin_bp.route('/api/incidents', methods=['GET'])
+def get_incidents():
+    # Admin auth check
+    if not session.get('admin_authenticated'):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    # Collect analyzer/mitigator state
+    try:
+        global_spike = analyzer.detect_global_spike()
+        high_rate_ips = analyzer.detect_per_ip_flood()
+        z_alerts = [ip for ip in analyzer.ip_requests if analyzer.calculate_z_score(ip) > 3]
+        blocked = list(mitigator.blocked_ips.keys())
+
+        return jsonify({
+            'global_spike': global_spike,
+            'high_traffic_ips': high_rate_ips,
+            'anomalous_ips': z_alerts,
+            'blocked_ips': blocked,
+            'timestamp': time.time()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
