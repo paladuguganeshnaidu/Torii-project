@@ -66,3 +66,16 @@ input:focus, textarea:focus, select:focus{border-color:var(--ring);box-shadow:0 
 /* Results */
 .result{background:color-mix(in srgb, var(--card) 85%, #fff 15%);border:1px dashed var(--border);border-radius:10px;padding:12px;white-space:pre-wrap;min-height:68px}
 .muted{color:var(--muted)}
+
+/* Force light styling for the DoS detector tool page (use white background) */
+body.tool-page{
+	background: #ffffff;
+	color: #0b1324;
+}
+body.tool-page .card, body.tool-page .status-grid .card{
+	background: #ffffff;
+	border-color: #e5e7eb;
+	color: inherit;
+}
+body.tool-page .status-grid{background:transparent}
+body.tool-page .icon{background: radial-gradient(100% 100% at 70% 20%, #fff 0%, #f3f6fb 100%)}
