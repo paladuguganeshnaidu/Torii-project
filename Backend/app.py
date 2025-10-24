@@ -101,6 +101,7 @@ def create_app():
         'tool7-stegoshield-inspector.html',
         'tool8-stegoshield-extractor.html',
         'tool9-dos-detector.html',
+        'tool-web-vuln-scanner.html',
         'directory.html',
         'profile.html',
         'settings.html',
