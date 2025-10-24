@@ -15,6 +15,10 @@ from .tools.malware_analyzer import analyze_file_tool
 from .tools.web_recon import recon_target_tool
 from .tools.stegoshield_inspector import analyze_stegoshield_tool
 from .tools.stegoshield_extractor import analyze_stegoshield_extractor
+from .tools.web_vuln_scanner import WebVulnScanner
+import time
+from collections import deque
+from functools import wraps
 from .tools.dos_detector import DoSDetector
 import threading
 
@@ -336,6 +340,65 @@ def create_app():
 
         user = get_user_by_id(user_id)
         return jsonify({'ok': True, 'message': 'Coupon applied', 'is_premium': bool(user.get('is_premium')), 'allowed_tools': user.get('allowed_tools')})
+
+    # Web vulnerability scanner API (background scans)
+    last_calls = {}
+    def rate_limit(max_requests=5, window=60):
+        def decorator(f):
+            @wraps(f)
+            def decorated_function(*args, **kwargs):
+                ip = request.remote_addr
+                now = time.time()
+                if ip not in last_calls:
+                    last_calls[ip] = deque()
+                # Remove old calls
+                while last_calls[ip] and now - last_calls[ip][0] > window:
+                    last_calls[ip].popleft()
+                if len(last_calls[ip]) >= max_requests:
+                    return jsonify({"error": "Rate limit exceeded. Try again later."}), 429
+                last_calls[ip].append(now)
+                return f(*args, **kwargs)
+            return decorated_function
+        return decorator
+
+    active_scans = {}
+
+    @app.route('/api/scan', methods=['POST'])
+    @rate_limit(max_requests=3, window=60)
+    def start_scan():
+        data = request.get_json(silent=True) or {}
+        target = (data.get('url') or '').strip()
+        if not target:
+            return jsonify({"error": "URL is required"}), 400
+        if not (target.startswith('http://') or target.startswith('https://')):
+            return jsonify({"error": "URL must start with http:// or https://"}), 400
+
+        def run_scan(tid: str, url: str):
+            scanner = WebVulnScanner(url, timeout=15)
+            try:
+                results = scanner.run()
+                active_scans[tid]["status"] = "complete"
+                active_scans[tid]["results"] = results
+            except Exception as e:
+                active_scans[tid]["status"] = "error"
+                active_scans[tid]["error"] = str(e)
+
+        scan_id = f"scan_{int(time.time())}_{request.remote_addr.replace('.', '_')}"
+        active_scans[scan_id] = {"status": "running", "target": target, "started_at": time.time()}
+        thread = threading.Thread(target=run_scan, args=(scan_id, target), daemon=True)
+        thread.start()
+        return jsonify({"scan_id": scan_id, "status": "started", "target": target})
+
+    @app.route('/api/scan/<scan_id>', methods=['GET'])
+    def get_scan_status(scan_id: str):
+        scan = active_scans.get(scan_id)
+        if not scan:
+            return jsonify({"error": "Scan not found"}), 404
+        if scan.get('status') == 'complete':
+            return jsonify({"status": "complete", "target": scan.get('target'), "results": scan.get('results')})
+        if scan.get('status') == 'error':
+            return jsonify({"status": "error", "error": scan.get('error')})
+        return jsonify({"status": "running", "target": scan.get('target')})
 
     # DoS control endpoints
     @app.route('/api/start_dos', methods=['POST'])
