@@ -89,6 +89,7 @@ def create_app():
         'tool6-web-recon.html',
         'tool7-stegoshield-inspector.html',
         'tool8-stegoshield-extractor.html',
+        'tool9-dos-detector.html',
         'directory.html',
         'profile.html',
         'settings.html',
