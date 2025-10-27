@@ -88,8 +88,9 @@
           calc((0 + (var(--on, 0) * 20)) * 1%),
           calc((10 + (var(--on, 0) * 20)) * 1%)
         );
-        --glow-color: hsl(320, 40%, 45%);
-        --glow-color-dark: hsl(320, 40%, 35%);
+        /* default to a neon green-ish glow to match design */
+        --glow-color: hsl(140, 65%, 45%);
+        --glow-color-dark: hsl(140, 65%, 35%);
       }
 
   body {
@@ -109,6 +110,9 @@
         flex-wrap: nowrap;
         padding: 2rem;
       }
+
+      /* make login card slightly larger to match mock */
+      .login-form { max-width: 520px; padding: 3.5rem 3rem }
 
       /* left column (lamp) */
       .lamp-left{ position:relative; flex:0 0 42%; display:flex; align-items:center; justify-content:flex-end }
@@ -183,6 +187,9 @@
     </style>
   </head>
   <body>
+    <header style="text-align:center;padding:28px 0 8px;background:transparent;">
+      <h1 style="color:#f8fafc;font-family: Inter, system-ui, -apple-system, sans-serif; font-size:44px; margin:0; font-weight:600; letter-spacing:1px;">Login Lamp</h1>
+    </header>
     <form class="radio-controls" aria-hidden="true">
       <input type="radio" id="on" name="status" value="on" />
       <label for="on">On</label>
