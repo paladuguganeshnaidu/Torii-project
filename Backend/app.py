@@ -15,11 +15,9 @@ from .tools.malware_analyzer import analyze_file_tool
 from .tools.web_recon import recon_target_tool
 from .tools.stegoshield_inspector import analyze_stegoshield_tool
 from .tools.stegoshield_extractor import analyze_stegoshield_extractor
-from .tools.web_vuln_scanner import WebVulnScanner
 import time
 from collections import deque
 from functools import wraps
-from .tools.dos_detector import DoSDetector
 import threading
 
 
@@ -27,12 +25,8 @@ def create_app():
     app = Flask(__name__, template_folder=os.path.join(os.path.dirname(__file__), 'templates'))
     app.config.from_object(Config)
 
-    # DoS detector instance attached to app for lifecycle management
-    try:
-        app.detector = DoSDetector()
-    except Exception:
-        # If tools aren't available in environment, attach a dummy
-        app.detector = None
+    # Note: DoS detector removed from this deployment. detection fields kept for compatibility.
+    app.detector = None
     app.detection_thread = None
     app.detection_active = False
 
@@ -100,8 +94,8 @@ def create_app():
         'tool6-web-recon.html',
         'tool7-stegoshield-inspector.html',
         'tool8-stegoshield-extractor.html',
-        'tool9-dos-detector.html',
-        'tool-web-vuln-scanner.html',
+    #'tool9-dos-detector.html',
+    #'tool-web-vuln-scanner.html',
         'directory.html',
         'profile.html',
         'settings.html',
@@ -353,53 +347,6 @@ def create_app():
     # The API blueprint will be imported and registered earlier in this function when available.
 
     # DoS control endpoints
-    @app.route('/api/start_dos', methods=['POST'])
-    def start_dos():
-        if app.detection_active:
-            return jsonify({"status": "Already running"})
-
-        data = request.get_json(silent=True) or {}
-        mode = data.get('mode', 'pcap')
-        log_path = data.get('log_path')
-
-        def run_detector():
-            try:
-                if not app.detector:
-                    return
-                app.detector.start(mode=mode, log_path=log_path)
-            except Exception as e:
-                print(f"Detector error: {e}")
-
-        app.detection_thread = threading.Thread(target=run_detector, daemon=True)
-        app.detection_thread.start()
-        app.detection_active = True
-        return jsonify({"status": "DoS detection started"})
-
-    @app.route('/api/stop_dos', methods=['POST'])
-    def stop_dos():
-        # Graceful stop: flip running flags on detector if available
-        if app.detector and hasattr(app.detector, 'running'):
-            try:
-                app.detector.running = False
-            except Exception:
-                pass
-        app.detection_active = False
-        return jsonify({"status": "DoS detection stopped"})
-
-    @app.route('/api/unblock', methods=['POST'])
-    def unblock():
-        data = request.get_json(silent=True) or {}
-        ip = data.get('ip')
-        try:
-            import subprocess
-            subprocess.run(['sudo', 'iptables', '-D', 'INPUT', '-s', ip, '-j', 'DROP'], check=True)
-            # Try to remove from detector/mitigator state if available
-            try:
-                if app.detector and hasattr(app.detector, 'mitigator'):
-                    app.detector.mitigator.blocked_ips.pop(ip, None)
-            except Exception:
-                pass
-            return jsonify({"status": f"Unblocked {ip}"})
-        except Exception:
-            return jsonify({"status": f"Failed to unblock {ip}"})
+    # DoS-related endpoints removed. If you need to re-enable them, re-add the detector tool and restore these routes.
+    # NOTE: The unblock endpoint (iptables) and detector control are intentionally omitted for safety.
     return app

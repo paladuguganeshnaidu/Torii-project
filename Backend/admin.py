@@ -5,15 +5,15 @@ from flask import g
 import os
 import time
 
-# DoS detection tools
-from .tools.dos_detector import DoSDetector
+# DoS detection tools (detector removed)
+# DoSDetector removed — keep analyzer/mitigator for other admin capabilities
 from .tools.analyzer import Analyzer
 from .tools.mitigator import Mitigator
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
-# Initialize detector (should be a singleton in production)
-detector = DoSDetector()
+# Initialize admin helpers. Detector is not available in this deployment.
+detector = None
 analyzer = Analyzer()
 mitigator = Mitigator()
 

@@ -3,41 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Web Vulnerability Scanner — Torii</title>
+  <title>Web Vulnerability Scanner — Removed</title>
   <link rel="stylesheet" href="assets/css/main.css?v=2" />
-  <meta name="description" content="Run a lightweight, safe web vulnerability surface scan (passive checks) in the background." />
+  <meta name="description" content="This tool has been removed from the deployment." />
   <style>
     .tool-page{max-width:980px;margin:28px auto;padding:18px}
-    .tool-header{display:flex;align-items:center;gap:12px}
-    .tool-card{background:#fff;border:1px solid #e6e9ef;border-radius:12px;padding:18px;margin-top:18px}
-    .btn{background:#2563eb;color:white;padding:10px 14px;border-radius:10px;border:none;cursor:pointer}
-    .btn.secondary{background:#eef2ff;color:#2563eb}
-    .input{width:100%;padding:10px;border-radius:8px;border:1px solid #dbe2f0}
     .muted{color:#64748b;font-size:14px}
-    pre.results{background:#0b1220;color:#dbeafe;padding:12px;border-radius:8px;overflow:auto}
-    .kpi{display:flex;gap:12px;margin-top:12px}
-    .kpi .item{background:#f8fafc;border:1px solid #e6eef8;padding:10px;border-radius:8px}
+    .gone{background:#fff;border:1px solid #f3e8ff;padding:18px;border-radius:12px}
   </style>
 </head>
 <body class="tool-page">
   <div class="tool-page">
     <a href="/" class="plain">← Home</a>
     <header class="tool-header">
-      <h1>Web Vulnerability Scanner</h1>
+      <h1>Web Vulnerability Scanner — Removed</h1>
     </header>
 
-    <p class="muted">This tool performs a small set of non-invasive checks (headers, robots, basic fingerprinting, and common endpoint probe). Long, aggressive scans are not supported here — use a dedicated scanner on your own infrastructure.</p>
-
-    <div class="tool-card">
-      <label for="targetUrl">Target URL</label>
-      <input id="targetUrl" class="input" placeholder="https://example.com" />
-      <div style="display:flex;gap:8px;margin-top:12px;">
-        <button id="startBtn" class="btn">Start scan</button>
-        <button id="cancelBtn" class="btn secondary">Cancel</button>
-      </div>
-
-      <div class="kpi">
-        <div class="item">Status: <strong id="scanStatus">idle</strong></div>
+    <div class="gone">
+      <p class="muted">The Web Vulnerability Scanner tool was removed from this deployment for security and operational reasons. If you need similar functionality, run a dedicated scanner in your own environment or contact the project maintainers.</p>
+    </div>
         <div class="item">Scan ID: <strong id="scanId">-</strong></div>
         <div class="item">Elapsed: <strong id="elapsed">0s</strong></div>
       </div>

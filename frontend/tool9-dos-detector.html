@@ -1,42 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>DoS Detector | Torii-Project</title>
-    <link rel="stylesheet" href="/assets/css/main.css"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DoS Detector — Removed</title>
+    <link rel="stylesheet" href="assets/css/main.css?v=2" />
+    <meta name="description" content="This tool has been removed from the deployment." />
+    <style>
+        .tool-page{max-width:980px;margin:28px auto;padding:18px}
+        .muted{color:#64748b;font-size:14px}
+        .gone{background:#fff;border:1px solid #fee2e2;padding:18px;border-radius:12px}
+    </style>
 </head>
 <body class="tool-page">
-    <nav class="navbar">
-        <a href="/index.html" class="logo">Torii-Project</a>
-        <div class="nav-right">
-            <a href="/profile.html">Profile</a>
-            <a href="/settings.html">Settings</a>
+    <div class="tool-page">
+        <a href="/" class="plain">← Home</a>
+        <header class="tool-header">
+            <h1>DoS Detector — Removed</h1>
+        </header>
+
+        <div class="gone">
+            <p class="muted">The DoS Detector tool has been removed from this deployment. Network mitigation features are sensitive and should be run in controlled environments only.</p>
         </div>
-    </nav>
-
-    <div class="container">
-        <h1>DoS Detection Monitor</h1>
-        <p>Real-time detection of traffic anomalies and potential DoS attacks.</p>
-
-        <div class="control-panel">
-            <button id="startBtn" class="btn-primary">Start Monitoring</button>
-            <button id="stopBtn" class="btn-danger">Stop</button>
-            <select id="modeSelect">
-                <option value="pcap">Packet Sniffing (pcap)</option>
-                <option value="log">Log Monitoring</option>
-            </select>
-            <input type="text" id="logPath" placeholder="/var/log/apache2/access.log" style="display:none;"/>
-        </div>
-
-        <div class="status-grid">
-            <div class="card">
-                <h3>Global PPS</h3>
-                <div id="globalPPS">0</div>
-            </div>
-            <div class="card">
-                <h3>Attack Status</h3>
-                <div id="attackStatus">Idle</div>
             </div>
             <div class="card">
                 <h3>Blocked IPs</h3>
