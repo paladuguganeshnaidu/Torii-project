@@ -76,25 +76,34 @@ def view_users():
     try:
         # Safe SQL query - no user input involved, protected against SQL injection
         cursor = conn.cursor()
+        # Left join auth to avoid exposing password hashes directly; we only mark whether a password is set
         cursor.execute('''
-            SELECT id, email, mobile, registered_at 
-            FROM users 
-            ORDER BY registered_at DESC
+            SELECT u.id, COALESCE(u.username, ''), u.email, u.mobile, u.registered_at,
+                   CASE WHEN a.password_hash IS NOT NULL THEN 1 ELSE 0 END AS password_set,
+                   a.last_password_change, COALESCE(a.failed_attempts, 0)
+            FROM users u
+            LEFT JOIN auth a ON u.id = a.user_id
+            ORDER BY u.registered_at DESC
         ''')
         users = cursor.fetchall()
-        
+
         # Debug logging
         print(f"[ADMIN DEBUG] Found {len(users)} users in database")
+        # Do not log password_hash or other sensitive fields
         for user in users:
-            print(f"[ADMIN DEBUG] User: {user}")
-            
+            print(f"[ADMIN DEBUG] User id={user[0]}, email={user[2]}")
+
     except Exception as e:
         print(f"[ADMIN ERROR] Failed to fetch users: {e}")
         users = []
     finally:
         conn.close()
-    
-    return render_template('admin/users.html', users=users)
+
+    # Compute summary counts without exposing sensitive data
+    total_users = len(users)
+    passwords_set = sum(1 for u in users if u[5])
+
+    return render_template('admin/users.html', users=users, total_users=total_users, passwords_set=passwords_set)
 
 @admin_bp.route('/debug-db')
 def debug_db():

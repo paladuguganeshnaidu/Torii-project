@@ -131,8 +131,12 @@
         
         <div class="stats">
             <div class="stat-card">
-                <h2>{{ users|length }}</h2>
+                <h2>{{ total_users }}</h2>
                 <p>Total Users</p>
+            </div>
+            <div class="stat-card">
+                <h2>{{ passwords_set }}</h2>
+                <p>Passwords Set</p>
             </div>
         </div>
 
@@ -141,18 +145,26 @@
             <thead>
                 <tr>
                     <th>ID</th>
+                    <th>Username</th>
                     <th>Email</th>
                     <th>Mobile</th>
+                    <th>Password Set</th>
+                    <th>Last Password Change</th>
+                    <th>Failed Attempts</th>
                     <th>Registered At</th>
                 </tr>
             </thead>
             <tbody>
                 {% for user in users %}
                 <tr>
-                    <td>{{ user[0] if user[0] is defined else user['id'] }}</td>
-                    <td>{{ user[1] if user[1] is defined else user['email'] }}</td>
-                    <td>{{ (user[2] if user[2] is defined else user['mobile']) or 'N/A' }}</td>
-                    <td>{{ user[3] if user[3] is defined else user['registered_at'] }}</td>
+                    <td>{{ user[0] }}</td>
+                    <td>{{ user[1] or '—' }}</td>
+                    <td>{{ user[2] or '—' }}</td>
+                    <td>{{ user[3] or 'N/A' }}</td>
+                    <td>{{ 'Yes' if user[5] else 'No' }}</td>
+                    <td>{{ user[6] or '—' }}</td>
+                    <td>{{ user[7] }}</td>
+                    <td>{{ user[4] }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
