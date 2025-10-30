@@ -1,39 +1,52 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Torii · URL Scanner</title>
-    <link rel="stylesheet" href="assets/css/main.css?v=2" />
-    <link rel="stylesheet" href="/assets/css/cyber-bg.css">
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Torii · URL Scanner</title>
+        <link rel="stylesheet" href="assets/css/main.css?v=2" />
+        <link rel="stylesheet" href="/assets/css/cyber-bg.css">
+        <link rel="stylesheet" href="/assets/css/tools.css">
 </head>
-<body class="home">
+<body class="tool-page">
     <canvas id="cyber-canvas"></canvas>
-    <div class="app">
-        <header>
-            <div class="brand"><span class="logo" aria-hidden="true"></span><span class="title">Torii</span></div>
-            <nav>
-                <a href="index.html">Home</a>
-                <span aria-hidden="true">·</span>
-                <a href="/auth/login">Login</a>
-                <span aria-hidden="true">·</span>
-                <a href="/auth/register">Register</a>
-            </nav>
-        </header>
-
-        <div class="card">
-            <h2>🔗 URL Scanner</h2>
-            <p class="muted">Quick heuristic check for protocol and suspicious patterns.</p>
-            <div class="field">
-                <label for="urlInput">URL</label>
-                <input id="urlInput" type="url" placeholder="https://example.com" />
+    <div class="tool-shell">
+        <section class="tool-main">
+            <div class="tool-header">
+                <div class="tool-title">🔗 URL Scanner</div>
+                <div class="tool-toolbar">
+                    <button class="btn" onclick="document.getElementById('urlInput').focus()">Focus</button>
+                    <button class="btn" onclick="document.getElementById('urlInput').value = ''">Clear</button>
+                </div>
             </div>
-            <button class="btn primary" onclick="scan()">Scan</button>
-            <div id="out" class="result" style="margin-top:12px"></div>
-        </div>
+
+            <div class="card">
+                <p class="muted">Quick heuristic check for protocol and suspicious patterns.</p>
+                <div class="field">
+                    <label for="urlInput">URL</label>
+                    <input id="urlInput" type="url" placeholder="https://example.com" />
+                </div>
+                <div class="flex" style="margin-top:8px">
+                    <button class="btn" onclick="scan()">Scan</button>
+                    <button class="copy-btn" data-target="#out">Copy</button>
+                </div>
+                <div id="out" class="result" style="margin-top:12px"></div>
+            </div>
+        </section>
+
+        <aside class="tool-side">
+            <div class="card">
+                <div class="meta">Quick Tips</div>
+                <ul class="small">
+                    <li>Include protocol (https://) to ensure accurate parsing.</li>
+                    <li>Some scans may be slow — watch the network panel if a request hangs.</li>
+                </ul>
+            </div>
+        </aside>
     </div>
 
     <script src="/assets/js/cyber-bg.js"></script>
+    <script src="/assets/js/tools-ui.js"></script>
     <script>
         async function scan(){
             const url = document.getElementById('urlInput').value;
@@ -41,61 +54,6 @@
             const data = await res.json();
             document.getElementById('out').textContent = JSON.stringify(data, null, 2);
         }
-    </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URL Scanner - Torii Security</title>
-    <link rel="stylesheet" href="assets/css/main.css">
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>URL Security Scanner</h1>
-            <p>Scan websites for security vulnerabilities and information gathering</p>
-        </header>
-        
-        <main>
-            <form id="url-form">
-                <div class="form-group">
-                    <label for="target-url">Target URL:</label>
-                    <input type="url" id="target-url" name="url" placeholder="https://example.com" required>
-                </div>
-                <button type="submit">Scan URL</button>
-            </form>
-            
-            <div id="result-container" class="result-container hidden">
-                <h2>Scan Results</h2>
-                <div id="result-content"></div>
-            </div>
-        </main>
-    </div>
-    
-    <script>
-        document.getElementById('url-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const url = document.getElementById('target-url').value;
-            
-            fetch('/api/scan_url', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({url: url})
-            })
-            .then(response => response.json())
-            .then(data => {
-                const resultContainer = document.getElementById('result-container');
-                const resultContent = document.getElementById('result-content');
-                resultContent.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-                resultContainer.classList.remove('hidden');
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
-        });
     </script>
 </body>
 </html>
