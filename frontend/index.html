@@ -40,7 +40,25 @@
     .profile-dropdown a{display:block;padding:10px 16px;color:var(--fg);text-decoration:none;transition:background 0.2s}
     .profile-dropdown a:hover{background:var(--bg)}
     .profile-dropdown hr{margin:4px 0;border:none;border-top:1px solid var(--border)}
+    /* Logo styling: white border and subtle white glow */
+    .pycyberdb-logo{width:72px;height:72px;object-fit:contain;border-radius:12px;border:3px solid rgba(255,255,255,1);box-shadow:0 8px 24px rgba(255,255,255,0.06), 0 0 0 6px rgba(255,255,255,0.02) inset;background:transparent}
   </style>
+
+  <!-- Inline SVG defs: logo outline/glow filter (applied to logo image) -->
+  <svg aria-hidden="true" width="0" height="0" style="position:absolute;left:-9999px;top:-9999px;">
+    <defs>
+      <filter id="logo-outline" x="-50%" y="-50%" width="200%" height="200%" primitiveUnits="objectBoundingBox">
+        <feMorphology in="SourceAlpha" operator="dilate" radius="1.6" result="dilated"/>
+        <feGaussianBlur in="dilated" stdDeviation="2" result="blurred"/>
+        <feColorMatrix in="blurred" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0 0.22" result="whiteGlow"/>
+        <feComposite in="whiteGlow" in2="SourceGraphic" operator="over" result="outGlow"/>
+        <feMerge>
+          <feMergeNode in="outGlow"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+    </defs>
+  </svg>
   <meta name="color-scheme" content="light dark" />
   <link rel="icon" href="data:," />
   <meta name="description" content="Torii: a compact hub of security utilities (email analysis, URL scan, hash crack, SMS spam check, malware hash, and recon)." />
@@ -68,13 +86,11 @@
         </div>
       </div>
       
-      <h1>PyCyberDB</h1>
+        <div class="brand-inline" style="display:flex;align-items:center;gap:12px;justify-content:center">
+          <img src="/assets/img/pycyberdb-logo.png" alt="pycyberdb logo" class="pycyberdb-logo" onerror="this.onerror=null; this.src='/assets/img/pycyberdb-logo.svg'" style="filter:url(#logo-outline);" />
+          <h1 style="color:#ffffff; margin:0; font-size:40px">PyCyberDB</h1>
+        </div>
       <p class="subtitle">Security tools at your fingertips</p>
-      <p id="authLinks">
-        <a class="plain" href="/auth/login">Login</a>
-        <span aria-hidden="true">·</span>
-        <a class="plain" href="/auth/register">Register</a>
-      </p>
     </header>
 
     <section class="search">
