@@ -12,3 +12,4 @@ pillow
 reportlab
 cryptography
 whois
+argon2-cffi>=21.3.0
