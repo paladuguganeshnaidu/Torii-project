@@ -79,8 +79,9 @@ def view_users():
         # Left join auth to avoid exposing password hashes directly; we only mark whether a password is set
         cursor.execute('''
             SELECT u.id, COALESCE(u.username, ''), u.email, u.mobile, u.registered_at,
-                   CASE WHEN a.password_hash IS NOT NULL THEN 1 ELSE 0 END AS password_set,
-                   a.last_password_change, COALESCE(a.failed_attempts, 0)
+                   CASE WHEN COALESCE(a.password_hash, u.password_hash) IS NOT NULL THEN 1 ELSE 0 END AS password_set,
+                   COALESCE(a.last_password_change, NULL) as last_password_change,
+                   COALESCE(a.failed_attempts, 0) as failed_attempts
             FROM users u
             LEFT JOIN auth a ON u.id = a.user_id
             ORDER BY u.registered_at DESC

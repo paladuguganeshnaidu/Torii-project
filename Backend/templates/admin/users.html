@@ -161,9 +161,9 @@
                     <td>{{ user[1] or '—' }}</td>
                     <td>{{ user[2] or '—' }}</td>
                     <td>{{ user[3] or 'N/A' }}</td>
-                    <td>{{ 'Yes' if user[5] else 'No' }}</td>
+                    <td>{{ 'Yes' if (user[5] == 1 or user[5] == True) else 'No' }}</td>
                     <td>{{ user[6] or '—' }}</td>
-                    <td>{{ user[7] }}</td>
+                    <td>{{ user[7] or 0 }}</td>
                     <td>{{ user[4] }}</td>
                 </tr>
                 {% endfor %}
