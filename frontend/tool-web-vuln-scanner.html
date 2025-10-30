@@ -11,8 +11,10 @@
     .muted{color:#64748b;font-size:14px}
     .gone{background:#fff;border:1px solid #f3e8ff;padding:18px;border-radius:12px}
   </style>
+    <link rel="stylesheet" href="/assets/css/cyber-bg.css">
 </head>
 <body class="tool-page">
+    <canvas id="cyber-canvas"></canvas>
   <div class="tool-page">
     <a href="/" class="plain">← Home</a>
     <header class="tool-header">
@@ -34,7 +36,8 @@
   </div>
 
   <script>
-    let pollHandle = null;
+    <script src="/assets/js/cyber-bg.js"></script>
+    <script src="assets/js/main.js"></script>
     let startedAt = null;
 
     function setStatus(s){ document.getElementById('scanStatus').textContent = s }

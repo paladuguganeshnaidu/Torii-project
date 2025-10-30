@@ -30,10 +30,12 @@
     .row .card{flex:1;min-width:260px}
     .msg{margin-top:8px;font-size:14px}
   </style>
+  <link rel="stylesheet" href="/assets/css/cyber-bg.css">
   <meta name="color-scheme" content="light dark" />
   <link rel="icon" href="data:," />
 </head>
 <body>
+  <canvas id="cyber-canvas"></canvas>
   <div class="page">
     <header class="top">
       <a href="/auth/login" id="loginBtn" class="login-btn">Login</a>
@@ -67,6 +69,7 @@
     <p><a href="/index.html">← Back to tools</a></p>
   </div>
 
+  <script src="/assets/js/cyber-bg.js"></script>
   <script>
     async function load()
     {

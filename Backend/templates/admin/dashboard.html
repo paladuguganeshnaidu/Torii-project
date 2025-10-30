@@ -37,8 +37,10 @@
     .btn{background:var(--primary);color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500}
     .btn:hover{background:#2563eb}
   </style>
-</head>
+    <link rel="stylesheet" href="/assets/css/cyber-bg.css">
+  </head>
 <body>
+  <canvas id="cyber-canvas"></canvas>
   <div class="container">
     <div class="header">
       <h1>📊 Admin Dashboard</h1>
@@ -110,6 +112,7 @@
     </div>
   </div>
 
+  <script src="/assets/js/cyber-bg.js"></script>
   <script>
     async function loadStats() {
       try {
