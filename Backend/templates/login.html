@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login — Torii</title>
+    <title>pycyberdb Live Login</title>
     <style>
       *,
       *:after,
@@ -11,458 +11,446 @@
         box-sizing: border-box;
       }
 
-      :root {
-        --cord: hsl(210, 0%, calc((40 + (var(--on, 0) * 50)) * 1%));
-        --opening: hsl(
-          50,
-          calc((10 + (var(--on, 0) * 80)) * 1%),
-          calc((20 + (var(--on, 0) * 70)) * 1%)
-        );
-        --feature: #0a0a0a;
-        --accent: 210;
-        --tongue: #e06952;
-        --base-top: hsl(
-          var(--accent),
-          0%,
-          calc((40 + (var(--on, 0) * 40)) * 1%)
-        );
-        --base-side: hsl(
-          var(--accent),
-          0%,
-          calc((20 + (var(--on, 0) * 40)) * 1%)
-        );
-        --post: hsl(
-          var(--accent),
-          0%,
-          calc((20 + (var(--on, 0) * 40)) * 1%)
-        );
-        --b-1: hsla(
-          45,
-          calc((0 + (var(--on, 0) * 0)) * 1%),
-          calc((50 + (var(--on, 0) * 50)) * 1%),
-          0.85
-        );
-        --b-2: hsla(
-          45,
-          calc((0 + (var(--on, 0) * 0)) * 1%),
-          calc((20 + (var(--on, 0) * 30)) * 1%),
-          0.25
-        );
-        --b-3: hsla(
-          45,
-          calc((0 + (var(--on, 0) * 0)) * 1%),
-          calc((20 + (var(--on, 0) * 30)) * 1%),
-          0.5
-        );
-        --b-4: hsla(
-          45,
-          calc((0 + (var(--on, 0) * 0)) * 1%),
-          calc((20 + (var(--on, 0) * 30)) * 1%),
-          0.25
-        );
-        --l-1: hsla(
-          45,
-          calc((0 + (var(--on, 0) * 20)) * 1%),
-          calc((50 + (var(--on, 0) * 50)) * 1%),
-          0.85
-        );
-        --l-2: hsla(
-          45,
-          calc((0 + (var(--on, 0) * 20)) * 1%),
-          calc((50 + (var(--on, 0) * 50)) * 1%),
-          0.85
-        );
-        --shade-hue: 320;
-        --t-1: hsl(
-          var(--shade-hue),
-          calc((0 + (var(--on, 0) * 20)) * 1%),
-          calc((30 + (var(--on, 0) * 60)) * 1%)
-        );
-        --t-2: hsl(
-          var(--shade-hue),
-          calc((0 + (var(--on, 0) * 20)) * 1%),
-          calc((20 + (var(--on, 0) * 35)) * 1%)
-        );
-        --t-3: hsl(
-          var(--shade-hue),
-          calc((0 + (var(--on, 0) * 20)) * 1%),
-          calc((10 + (var(--on, 0) * 20)) * 1%)
-        );
-        /* default to a neon green-ish glow to match design */
-        --glow-color: hsl(140, 65%, 45%);
-        --glow-color-dark: hsl(140, 65%, 35%);
-      }
-
-  body {
+      /* Base Layout & Theme */
+      body {
         min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: #121921;
-        margin: 0;
-        font-family: system-ui, -apple-system, sans-serif;
-      }
-
-      .container {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8vmin;
-        flex-wrap: nowrap;
-        padding: 2rem;
+        background: #121921; /* Dark background */
+        margin: 0;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        color: #f8fafc;
+        padding: 1rem;
+        overflow: hidden; /* Prevent scrollbars from background movement */
       }
 
-      /* make login card slightly larger to match mock */
-      .login-form { max-width: 520px; padding: 3.5rem 3rem }
-
-      /* left column (lamp) */
-      .lamp-left{ position:relative; flex:0 0 42%; display:flex; align-items:center; justify-content:flex-end }
-      .lamp-right{ flex:1 1 58%; min-width:320px }
-      .lamp-cord-visual{ position:absolute; left:46%; top:80px; width:6px; height:260px; background:linear-gradient(180deg,#444,#222); border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,0.4); transform-origin:top; }
-      .pull-instruction{ position:absolute; left:50%; top:350px; transform:translateX(-50%); color:#cbd5e1; font-weight:600; background:transparent; border:none }
-
-      .login-form {
-        background: rgba(18, 25, 33, 0.9);
-        padding: 3rem 2.5rem;
-        border-radius: 20px;
-        min-width: 320px;
-        opacity: 0;
-        transform: scale(0.8) translateY(20px);
-        pointer-events: none;
-        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        border: 2px solid transparent;
-        box-shadow: 0 0 0px rgba(255, 255, 255, 0);
-      }
-
-      .login-form.active {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-        pointer-events: all;
-        border-color: var(--glow-color);
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1),
-          0 0 30px var(--glow-color),
-          inset 0 0 15px rgba(255, 255, 255, 0.05);
-      }
-
-      .login-form h2 {
-        color: #fff;
-        font-size: 2rem;
-        margin: 0 0 2rem 0;
-        text-align: center;
-        text-shadow: 0 0 8px var(--glow-color);
-      }
-
-      .form-group { margin-bottom: 1rem }
-      .form-group label{ display:block;color:#aaa;margin-bottom:6px }
-      .form-group input{ width:100%;padding:0.75rem 1rem;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.02);color:#fff }
-
-      .login-btn {
+      /* Full-Screen Canvas for Animation */
+      #cyber-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
-        padding: 0.875rem;
-        background: linear-gradient(
-          135deg,
-          var(--glow-color),
-          var(--glow-color-dark)
-        );
-        border: none;
-        border-radius: 10px;
-        color: #fff;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        margin-top: 0.5rem;
+        height: 100%;
+        z-index: 1; /* Below the content */
+        filter: brightness(0.7); /* Slightly dim the background glow */
       }
 
-      .login-btn:hover { transform: translateY(-2px) }
+      /* Content Wrapper (Login Card and UI elements) */
+      .content-wrapper {
+        position: relative;
+        z-index: 10; /* Ensures content sits on top of the canvas */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        transition: opacity 0.5s ease-in-out; 
+      }
 
-      .form-footer { margin-top: 1rem; text-align:center }
-      .forgot-link{ color:#888 }
+      /* Close Button Styling */
+      .close-btn {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        width: 44px;
+        height: 44px;
+        background: #334155;
+        color: #e2e8f0;
+        border: none;
+        border-radius: 50%;
+        font-size: 1.6rem;
+        line-height: 1;
+        font-weight: 300;
+        cursor: pointer;
+        z-index: 20; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, transform 0.3s ease-out;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      }
 
-      .flashes{ width:100%; max-width:420px; margin:8px auto 0 }
-      .flash{ padding:10px 12px;border-radius:8px;margin-bottom:8px }
-      .flash.error{ background:#fee2e2;color:#991b1b }
-      .flash.success{ background:#dcfce7;color:#166534 }
-      .flash.info{ background:#e0f2fe;color:#075985 }
-      /* rope-like SVG cord styling (used for inline SVG paths) */
-      .cord { stroke-linecap: round; stroke-linejoin: round; fill: none; }
-      .cord--rig { stroke-width: 8; }
-      .cord--twist { stroke-width: 10; }
+      .close-btn:hover {
+        background: #475569;
+        transform: rotate(90deg) scale(1.05);
+      }
+      
+      .close-btn svg {
+          width: 24px;
+          height: 24px;
+          stroke: currentColor;
+          stroke-width: 2.5;
+      }
+
+      /* Screen Transition Overlay (Initial State) */
+      .screen-transition {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #4f46e5; /* Primary indigo color */
+        z-index: 100;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+      }
+
+      /* Screen Transition Overlay (Animation State) */
+      .screen-transition.animate-out {
+        opacity: 1;
+      }
+
+      /* Login Card Styling */
+      .login-card {
+        background: rgba(30, 41, 59, 0.9);
+        backdrop-filter: blur(5px);
+        padding: 3rem;
+        border-radius: 16px;
+        min-width: 320px;
+        max-width: 440px;
+        width: 100%;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.7), 0 0 10px rgba(79, 70, 229, 0.5);
+        border: 1px solid #334155;
+        z-index: 10;
+        transition: opacity 0.5s ease-in-out; /* Added transition for smooth fading */
+      }
+
+      /* Form Elements (unchanged styles for inputs/buttons) */
+      .form-group { margin-bottom: 1.25rem; }
+      .form-group label { display: block; color: #94a3b8; margin-bottom: 6px; font-size: 0.9rem; font-weight: 600; }
+      .form-group input {
+        width: 100%; padding: 0.75rem 1rem; border-radius: 10px; border: 2px solid #334155;
+        background: #0f172a; color: #f8fafc; transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      .form-group input:focus {
+        border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5); outline: none;
+      }
+      .login-btn {
+        width: 100%; padding: 0.875rem; background: #4f46e5; border: none;
+        border-radius: 10px; color: #fff; font-size: 1rem; font-weight: 600;
+        cursor: pointer; transition: background-color 0.2s, transform 0.1s;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); margin-top: 1rem;
+      }
+      .login-btn:hover { background: #4338ca; transform: translateY(-1px); }
+      .login-btn:active { transform: translateY(0); }
+      .form-footer { margin-top: 1.5rem; text-align: center; }
+      .forgot-link { color: #94a3b8; font-size: 0.9rem; text-decoration: none; transition: color 0.2s; }
+      .forgot-link:hover { color: #a5b4fc; }
+      .message-box {
+        padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem;
+        font-weight: 500; text-align: center; opacity: 0; height: auto;
+        min-height: 40px; transition: opacity 0.3s;
+      }
+      .message-box.active { opacity: 1; }
+      .message-box.error { background: #fee2e2; color: #991b1b; }
+      .message-box.success { background: #dcfce7; color: #166534; }
+
+      /* --- SUCCESS DISPLAY STYLES --- */
+      #success-display {
+          position: absolute; /* Allows it to occupy the same space as the login card */
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.5s ease-in-out;
+          font-size: 2rem;
+          font-weight: 700;
+          text-align: center;
+          color: #34d399; /* Bright green from the logo design */
+          text-shadow: 0 0 20px rgba(52, 211, 153, 0.8);
+          max-width: 440px;
+          padding: 3rem;
+      }
+      #success-display.visible {
+          opacity: 1;
+          visibility: visible;
+      }
+
     </style>
   </head>
   <body>
-    <header style="text-align:center;padding:28px 0 8px;background:transparent;">
-      <h1 style="color:#f8fafc;font-family: Inter, system-ui, -apple-system, sans-serif; font-size:44px; margin:0; font-weight:600; letter-spacing:1px;">Login Lamp</h1>
-    </header>
-    <form class="radio-controls" aria-hidden="true">
-      <input type="radio" id="on" name="status" value="on" />
-      <label for="on">On</label>
-      <input type="radio" id="off" name="status" value="off" />
-      <label for="off">Off</label>
-    </form>
+    
+    <!-- CANVAS FOR ANIMATED BACKGROUND (Z-INDEX 1) -->
+    <canvas id="cyber-canvas"></canvas>
 
-    <div class="container" style="align-items:stretch;">
-      <!-- Full interactive lamp on the left -->
-      <div class="lamp-left">
-        <div class="lamp-cord-visual" aria-hidden="true"></div>
-    <svg class="lamp" viewBox="0 0 333 484" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:420px;">
-        <g class="lamp__shade shade">
-          <ellipse class="shade__opening" cx="165" cy="220" rx="130" ry="20"/>
-          <ellipse class="shade__opening-shade" cx="165" cy="220" rx="130" ry="20" fill="url(#opening-shade)"/>
-        </g>
-        <g class="lamp__base base">
-          <path class="base__side" d="M165 464c44.183 0 80-8.954 80-20v-14h-22.869c-14.519-3.703-34.752-6-57.131-6-22.379 0-42.612 2.297-57.131 6H85v14c0 11.046 35.817 20 80 20z"/>
-          <path d="M165 464c44.183 0 80-8.954 80-20v-14h-22.869c-14.519-3.703-34.752-6-57.131-6-22.379 0-42.612 2.297-57.131 6H85v14c0 11.046 35.817 20 80 20z" fill="url(#side-shading)"/>
-          <ellipse class="base__top" cx="165" cy="430" rx="80" ry="20"/>
-          <ellipse cx="165" cy="430" rx="80" ry="20" fill="url(#base-shading)"/>
-        </g>
-        <g class="lamp__post post">
-          <path class="post__body" d="M180 142h-30v286c0 3.866 6.716 7 15 7 8.284 0 15-3.134 15-7V142z"/>
-          <path d="M180 142h-30v286c0 3.866 6.716 7 15 7 8.284 0 15-3.134 15-7V142z" fill="url(#post-shading)"/>
-        </g>
-        <g class="lamp__cords cords">
-          <!-- Single rope path: simplified and thicker to appear like one braided rope -->
-          <path class="cord cord--rig" d="M124 187 C120 210, 135 230, 128 250 C122 268, 138 286, 130 305 C122 324, 136 340, 124 360" stroke="url(#rope-grad)" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
-          <!-- Dummy cord used by the draggable logic (kept as a straight line) -->
-          <line class="cord cord--dummy" x1="124" y2="348" x2="124" y1="190" stroke="url(#rope-grad)" stroke-width="10" stroke-linecap="round"/>
-        </g>
-        <path class="lamp__light" d="M290.5 193H39L0 463.5c0 11.046 75.478 20 165.5 20s167-11.954 167-23l-42-267.5z" fill="url(#light)"/>
-        <g class="lamp__top top">
-          <path class="top__body" fill-rule="evenodd" clip-rule="evenodd" d="M164.859 0c55.229 0 100 8.954 100 20l29.859 199.06C291.529 208.451 234.609 200 164.859 200S38.189 208.451 35 219.06L64.859 20c0-11.046 44.772-20 100-20z"/>
-          <path class="top__shading" fill-rule="evenodd" clip-rule="evenodd" d="M164.859 0c55.229 0 100 8.954 100 20l29.859 199.06C291.529 208.451 234.609 200 164.859 200S38.189 208.451 35 219.06L64.859 20c0-11.046 44.772-20 100-20z" fill="url(#top-shading)"/>
-        </g>
-        <g class="lamp__face face">
-          <g class="lamp__mouth">
-            <!-- Smiling mouth (stroke) -->
-            <path d="M135 170 Q165 195 195 170" stroke="#0b0b0b" stroke-width="8" stroke-linecap="round" fill="none" />
-            <!-- Small tongue accent -->
-            <path d="M155 176 Q165 188 175 176 Q165 183 155 176Z" fill="#e06952" opacity="0.95" />
-          </g>
-          <g class="lamp__eyes">
-            <path class="lamp__eye lamp__stroke" d="M115 135c0-5.523-5.82-10-13-10s-13 4.477-13 10" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path class="lamp__eye lamp__stroke" d="M241 135c0-5.523-5.82-10-13-10s-13 4.477-13 10" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-          </g>
-        </g>
-          <defs>
-          <linearGradient id="opening-shade" x1="35" y1="220" x2="295" y2="220" gradientUnits="userSpaceOnUse">
-            <stop />
-            <stop offset="1" stop-color="var(--shade)" stop-opacity="0" />
-          </linearGradient>
-          <linearGradient id="base-shading" x1="85" y1="444" x2="245" y2="444" gradientUnits="userSpaceOnUse">
-            <stop stop-color="var(--b-1)" />
-            <stop offset="0.8" stop-color="var(--b-2)" stop-opacity="0" />
-          </linearGradient>
-          <linearGradient id="side-shading" x1="119" y1="430" x2="245" y2="430" gradientUnits="userSpaceOnUse">
-            <stop stop-color="var(--b-3)" />
-            <stop offset="1" stop-color="var(--b-4)" stop-opacity="0" />
-          </linearGradient>
-          <linearGradient id="post-shading" x1="150" y1="288" x2="180" y2="288" gradientUnits="userSpaceOnUse">
-            <stop stop-color="var(--b-1)" />
-            <stop offset="1" stop-color="var(--b-2)" stop-opacity="0" />
-          </linearGradient>
-          <linearGradient id="light" x1="165.5" y1="218.5" x2="165.5" y2="483.5" gradientUnits="userSpaceOnUse">
-            <stop stop-color="var(--l-1)" stop-opacity=".2" />
-            <stop offset="1" stop-color="var(--l-2)" stop-opacity="0" />
-          </linearGradient>
-          <linearGradient id="top-shading" x1="56" y1="110" x2="295" y2="110" gradientUnits="userSpaceOnUse">
-            <stop stop-color="var(--t-1)" stop-opacity=".8" />
-            <stop offset="1" stop-color="var(--t-2)" stop-opacity="0" />
-          </linearGradient>
-          <!-- gradient used to give a warm brown rope appearance -->
-          <linearGradient id="rope-grad" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stop-color="#b07a49" />
-            <stop offset="0.5" stop-color="#8b5a2b" />
-            <stop offset="1" stop-color="#5a3a1a" />
-          </linearGradient>
-        </defs>
-        <circle class="lamp__hit" cx="124" cy="347" r="66" fill="#C4C4C4" fill-opacity=".1"/>
-      </svg>
-        <button class="pull-instruction" id="pullInstruction" aria-hidden="false">Pull lamp to sign in</button>
-      </div>
+    <!-- UI ELEMENTS & LOGIN CARD (Z-INDEX 10+) -->
+    <div class="content-wrapper" id="content-wrapper">
+      
+      <!-- Back/Close Button (X) using SVG -->
+      <button class="close-btn" onclick="handleBack()">
+          <!-- Clean SVG 'X' icon -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+              <path d="M200 56L56 200M200 200L56 56" stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+      </button>
+      
+      <!-- The centered login card -->
+      <div class="login-card" id="loginCard">
 
-      <div class="login-form lamp-right" id="loginForm" style="max-width:520px;">
-        <h2>Welcome back</h2>
+        <h2>Account Login</h2>
 
-        {% with messages = get_flashed_messages(with_categories=True) %}
-          {% if messages %}
-          <div class="flashes">
-            {% for category, message in messages %}
-            <div class="flash {{ category }}">{{ message }}</div>
-            {% endfor %}
-          </div>
-          {% endif %}
-        {% endwith %}
+        <!-- Message Box for feedback (instead of alerts) -->
+        <div id="message-box" class="message-box" aria-live="polite"></div>
 
-        <form method="post" action="">
+        <form id="loginForm">
           <div class="form-group">
-            <label for="email">Email</label>
-            <input id="email" name="email" type="email" placeholder="you@example.com" required />
+            <label for="email">Email Address</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              required
+            />
           </div>
           <div class="form-group">
             <label for="password">Password</label>
-            <input id="password" name="password" type="password" placeholder="Your password" required />
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Your secret password"
+              required
+            />
           </div>
-          <button type="submit" class="login-btn">Login</button>
+          <button type="submit" class="login-btn">Sign In</button>
           <div class="form-footer">
-            <a class="forgot-link" href="/auth/register">Don't have an account? Register</a>
+            <a class="forgot-link" href="#">Forgot Password?</a>
+            <div style="margin-top: 12px">
+              <a class="forgot-link" href="#">
+                Don't have an account? Register here
+              </a>
+            </div>
           </div>
         </form>
       </div>
+
+      <!-- SUCCESS MESSAGE DISPLAY (Initially Hidden) -->
+      <div id="success-display">
+          Hello, Login Successful
+      </div>
     </div>
 
-    <script src="https://unpkg.com/gsap@3/dist/gsap.min.js"></script>
-    <script src="https://unpkg.com/gsap@3/dist/Draggable.min.js"></script>
-    <script src="https://assets.codepen.io/16327/MorphSVGPlugin3.min.js"></script>
-    <script>
-      const {
-        gsap,
-        gsap: { registerPlugin, set, to, timeline },
-        MorphSVGPlugin,
-        Draggable,
-      } = window;
-      try{ registerPlugin(MorphSVGPlugin); } catch(e){ /* optional plugin */ }
+    <!-- Screen Transition Overlay (Initially hidden, Z-INDEX 100) -->
+    <div id="transition-overlay" class="screen-transition"></div>
 
-      const AUDIO = {
-          CLICK: new Audio('https://assets.codepen.io/605876/click.mp3')
-      };
+    <!-- Firebase SDK Imports (Module setup remains the same) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-      const ON = document.querySelector('#on');
-      const OFF = document.querySelector('#off');
-      const LOGIN_FORM = document.querySelector('.login-form');
+        // Global variables provided by the environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-      let startX;
-      let startY;
+        if (Object.keys(firebaseConfig).length > 0) {
+            setLogLevel('Debug');
+            const app = initializeApp(firebaseConfig);
+            window.db = getFirestore(app);
+            window.auth = getAuth(app);
 
-      const PROXY = document.createElement('div');
-
-      const CORDS = gsap.utils.toArray('.cords path');
-  // The visible rope element (we now use a single rope path)
-  const ROPE = document.querySelector('.lamp__cords .cord');
-      const CORD_DURATION = 0.1;
-      const HIT = document.querySelector('.lamp__hit');
-      const DUMMY_CORD = document.querySelector('.cord--dummy');
-      const ENDX = DUMMY_CORD.getAttribute('x2');
-      const ENDY = DUMMY_CORD.getAttribute('y2');
-      const RESET = ()=> set(PROXY,{ x: ENDX, y: ENDY });
-      RESET();
-
-      const STATE = { ON: false };
-
-      gsap.set(['.cords', HIT], { x: -10 });
-
-      gsap.set('.lamp__eye', { rotate: 180, transformOrigin: '50% 50%', yPercent: 50 });
-
-      const CORD_TL = timeline({
-          paused: true,
-          onStart: ()=>{
-              STATE.ON = !STATE.ON;
-              set(document.documentElement,{ '--on': STATE.ON ? 1 : 0 });
-              const hue = gsap.utils.random(0,359);
-              set(document.documentElement,{ '--shade-hue': hue });
-              const glowColor = `hsl(${hue}, 40%, 45%)`;
-              const glowColorDark = `hsl(${hue}, 40%, 35%)`;
-              set(document.documentElement,{ '--glow-color': glowColor, '--glow-color-dark': glowColorDark });
-              set('.lamp__eye',{ rotate: STATE.ON ? 0 : 180 });
-              set([DUMMY_CORD, HIT],{ display: 'none' });
-              set(CORDS[0],{ display: 'block' });
-              try{ AUDIO.CLICK.play(); }catch(e){}
-              if(STATE.ON){ ON.setAttribute('checked', true); OFF.removeAttribute('checked'); LOGIN_FORM.classList.add('active'); }
-              else { ON.removeAttribute('checked'); OFF.setAttribute('checked', true); LOGIN_FORM.classList.remove('active'); }
-          },
-          onComplete: ()=>{ set([DUMMY_CORD, HIT],{ display: 'block' }); set(CORDS[0],{ display: 'none' }); RESET(); }
-      });
-
-      for(let i=1;i<CORDS.length;i++){
-          CORD_TL.add(to(CORDS[0],{ morphSVG: CORDS[i], duration: CORD_DURATION, repeat:1, yoyo:true }));
-      }
-
-    // helper to set rope path either curved (during drag) or straight (final)
-    function setRopePath(x, y, straight = false) {
-      if (!ROPE) return;
-      const startX = 124, startY = 187;
-      if (straight) {
-        ROPE.setAttribute('d', `M${startX} ${startY} L ${Math.round(x)} ${Math.round(y)}`);
-      } else {
-        // gentle quad curve mid point for natural rope sag
-        const midX = Math.round((startX + x) / 2 + (x - startX) * 0.15);
-        const midY = Math.round((startY + y) / 2 - Math.abs(x - startX) * 0.05);
-        ROPE.setAttribute('d', `M${startX} ${startY} Q ${midX} ${midY} ${Math.round(x)} ${Math.round(y)}`);
-      }
-    }
-
-    // Use pointer events for more accurate SVG coordinate mapping and realistic rope stretch
-    const SVG = document.querySelector('.lamp');
-    function clientToSvg(clientX, clientY) {
-      const rect = SVG.getBoundingClientRect();
-      return { x: clientX - rect.left, y: clientY - rect.top };
-    }
-
-    let dragging = false;
-    let startPoint = { x: 0, y: 0 };
-
-    function onPointerMove(ev) {
-      if (!dragging) return;
-      const p = clientToSvg(ev.clientX, ev.clientY);
-      const newX = p.x;
-      const newY = Math.max(ENDY, p.y);
-      set(DUMMY_CORD, { attr: { x2: newX, y2: newY } });
-      try { document.querySelector('.lamp-cord-visual').style.transform = `rotate(${Math.min(30, (newX - 124) / 6)}deg)` } catch (e) {}
-      setRopePath(newX, newY, false);
-    }
-
-    // pointerdown/up handled via Draggable press/release to keep existing behavior
-    Draggable.create(PROXY, {
-      trigger: HIT,
-      type: 'x,y',
-      onPress: function (e) {
-        // e is the pointer event
-        const p = clientToSvg(e.clientX, e.clientY);
-        startPoint = p;
-        dragging = true;
-        document.addEventListener('pointermove', onPointerMove);
-        try { document.getElementById('pullInstruction').textContent = 'Release to toggle'; } catch (e) {}
-      },
-      onRelease: function (e) {
-        dragging = false;
-        document.removeEventListener('pointermove', onPointerMove);
-        const endP = clientToSvg(e.clientX, e.clientY);
-        const dx = endP.x - startPoint.x;
-        const dy = endP.y - startPoint.y;
-        const travelled = Math.sqrt(dx * dx + dy * dy);
-        // If pulled far enough, keep rope straight at released point and toggle lamp
-        if (travelled > 50) {
-          const curX = parseFloat(DUMMY_CORD.getAttribute('x2')) || ENDX;
-          const curY = parseFloat(DUMMY_CORD.getAttribute('y2')) || ENDY;
-          setRopePath(curX, curY, true);
-          // Toggle lamp state and update visuals immediately
-          STATE.ON = !STATE.ON;
-          set(document.documentElement, { '--on': STATE.ON ? 1 : 0 });
-          const hue = gsap.utils.random(100, 170); // green hues
-          set(document.documentElement, { '--shade-hue': hue });
-          const glowColor = `hsl(${hue}, 60%, 45%)`;
-          const glowColorDark = `hsl(${hue}, 60%, 35%)`;
-          set(document.documentElement, { '--glow-color': glowColor, '--glow-color-dark': glowColorDark });
-          set('.lamp__eye', { rotate: STATE.ON ? 0 : 180 });
-          if (STATE.ON) {
-            LOGIN_FORM.classList.add('active');
-            try { AUDIO.CLICK.play(); } catch (e) {}
-          } else {
-            LOGIN_FORM.classList.remove('active');
-          }
+            // Attempt to sign in with custom token or anonymously
+            (async () => {
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(window.auth, initialAuthToken);
+                        console.log("Firebase signed in with custom token.");
+                    } else {
+                        await signInAnonymously(window.auth);
+                        console.log("Firebase signed in anonymously.");
+                    }
+                    window.userId = window.auth.currentUser?.uid || crypto.randomUUID();
+                } catch (error) {
+                    console.error("Firebase Auth Error:", error);
+                }
+            })();
         } else {
-          // animate rope back to rest position
-          to(DUMMY_CORD, { attr: { x2: ENDX, y2: ENDY }, duration: CORD_DURATION, onComplete: () => { setRopePath(ENDX, ENDY, false); } });
+             console.warn("Firebase configuration is missing. Skipping initialization.");
+             window.userId = crypto.randomUUID();
         }
-        try { document.getElementById('pullInstruction').textContent = 'Pull lamp to sign in'; document.querySelector('.lamp-cord-visual').style.transform = 'rotate(0deg)'; } catch (e) {}
-      }
-    });
+    </script>
+    
+    <script>
+      const canvas = document.getElementById('cyber-canvas');
+      const ctx = canvas.getContext('2d');
+      var W, H;
+      const trails = [];
+      const TRAIL_COUNT = 3;
 
-    // show the lamp and ensure instruction visible
-    try{
-    const instr = document.getElementById('pullInstruction');
-    instr.style.opacity = '1';
-    }catch(e){}
-    gsap.set('.lamp',{ display: 'block' });
+      // --- Animation Setup and Functions (Unchanged) ---
+
+      /**
+       * Resize canvas to fill window and update dimensions.
+       */
+      function resizeCanvas() {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        canvas.width = W;
+        canvas.height = H;
+        // Re-initialize trails on resize to adapt their amplitude/yOffset to the new H
+        initTrails(); 
+      }
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas(); 
+
+      /**
+       * Initialize the data/snake trails.
+       */
+      function initTrails() {
+        trails.length = 0; // Clear existing
+        for (let i = 0; i < TRAIL_COUNT; i++) {
+          trails.push({
+            // Colors from the pycyberdb logo concept
+            color: i % 3 === 0 ? 'rgba(79, 70, 229, 0.8)' : 
+                   i % 3 === 1 ? 'rgba(34, 197, 94, 0.8)' : 
+                                 'rgba(167, 139, 250, 0.8)',
+            speed: (0.5 + Math.random()) * 0.5,
+            amplitude: (H / 4) + (Math.random() * (H / 6)),
+            frequency: 0.0005 + Math.random() * 0.0005,
+            yOffset: H / 2 + (i - TRAIL_COUNT / 2) * 50
+          });
+        }
+      }
+
+      /**
+       * Main animation loop.
+       */
+      function animate(time) {
+        requestAnimationFrame(animate);
+
+        // Slow fade effect for a trailing background
+        ctx.fillStyle = 'rgba(18, 25, 33, 0.1)'; 
+        ctx.fillRect(0, 0, W, H);
+
+        trails.forEach(trail => {
+          ctx.beginPath();
+          ctx.strokeStyle = trail.color;
+          ctx.lineWidth = 2;
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = trail.color;
+
+          // Start off-screen
+          ctx.moveTo(-10, trail.yOffset); 
+
+          for (let x = -10; x <= W + 10; x += 5) {
+            // Sinusoidal movement (the "snake" movement)
+            const y = trail.yOffset + 
+                      Math.sin(x * trail.frequency + time * trail.speed * 0.005) * trail.amplitude * Math.sin(time * 0.0001);
+
+            ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+          
+          // Clear shadow for next trail draw
+          ctx.shadowBlur = 0;
+        });
+      }
+      // Start the animation loop
+      animate(0);
+
+
+      // --- UI & Form Functions ---
+
+      function handleBack() {
+          const overlay = document.getElementById('transition-overlay');
+          const loginCard = document.getElementById('loginCard');
+          const successDisplay = document.getElementById('success-display');
+          const messageBox = document.getElementById('message-box');
+
+
+          // 1. Start the animation (fade to full screen color)
+          overlay.classList.add('animate-out');
+          document.body.style.pointerEvents = 'none';
+
+          // 2. Wait for the animation to complete (0.5s in CSS)
+          setTimeout(() => {
+              // 3. Reset UI elements silently: Hide success, show login card
+              overlay.classList.remove('animate-out');
+              
+              // Resetting visibility and opacity for login card
+              loginCard.style.opacity = 1;
+              loginCard.style.visibility = 'visible';
+
+              // Hiding success message
+              successDisplay.classList.remove('visible');
+              
+              // Clear message box
+              messageBox.classList.remove('active');
+              messageBox.textContent = '';
+
+
+              document.body.style.pointerEvents = 'auto'; // Restore interaction
+              
+          }, 500); 
+      }
+
+      // Simple JavaScript for mock form handling and message display
+      document
+        .getElementById('loginForm')
+        .addEventListener('submit', function (event) {
+          event.preventDefault(); 
+
+          const email = document.getElementById('email').value.trim();
+          const password = document.getElementById('password').value.trim();
+          const messageBox = document.getElementById('message-box');
+          const loginCard = document.getElementById('loginCard');
+          const successDisplay = document.getElementById('success-display');
+          
+          // Clear previous messages
+          messageBox.textContent = '';
+          messageBox.className = 'message-box'; 
+
+          let message = '';
+          let className = 'error';
+          let loginSuccess = false;
+
+          // Mock login validation: test@user.com / 12345
+          if (email === '' || password === '') {
+            message = 'Please fill in both email and password fields.';
+            className = 'error';
+          } else if (email === 'test@user.com' && password === '12345') {
+            message = 'Authentication successful.';
+            className = 'success';
+            loginSuccess = true;
+          } else {
+            // Do not reveal test or temporary credentials to users
+            message = 'Invalid credentials. Please check your email and password.';
+            className = 'error';
+          }
+
+          messageBox.textContent = message;
+          messageBox.classList.add('active', className);
+
+          if (loginSuccess) {
+            
+            // PHASE 1: Wait 1000ms for user to read "Authentication successful."
+            setTimeout(() => { 
+                
+                // 2. Hide the message box and the login card
+                messageBox.classList.remove('active');
+                loginCard.style.opacity = 0;
+                loginCard.style.visibility = 'hidden';
+                
+                // 3. Show the final success message smoothly
+                successDisplay.classList.add('visible');
+
+                // Simulation: Keep the success message visible until the user closes it
+                console.log("Login Successful. Displaying final screen.");
+
+
+            }, 1000); // Wait 1 second to read the message
+
+          } else {
+             // Hide the error/info message after 5 seconds if not successful
+             setTimeout(() => {
+                messageBox.classList.remove('active');
+             }, 5000);
+          }
+        });
+
     </script>
   </body>
 </html>
